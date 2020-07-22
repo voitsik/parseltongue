@@ -16,8 +16,15 @@
 
 # Obit stuff.
 import Obit
-import OErr, OSystem
-import AIPSDir, History, Image, UV, InfoList, Table, TableList
+import OErr
+import OSystem
+import AIPSDir
+import History
+import Image
+import UV
+import InfoList
+import Table
+import TableList
 
 # Global AIPS defaults.
 import AIPS
@@ -30,21 +37,18 @@ try:
     numerix = os.environ['NUMERIX']
 except KeyError:
     numerix = 'numarray'
-    pass
 
 try:
     import numarray
     numarraystatus = True
 except ImportError:
     numarraystatus = False
-    pass
 
 try:
     import numpy as np
     numpystatus = True
 except ImportError:
     numpystatus = False
-    pass
 
 if numarraystatus and numpystatus:
     # Both numarray and NumPy are available.  Let the NUMERIX
@@ -53,8 +57,7 @@ if numarraystatus and numpystatus:
         numarraystatus = False
     else:
         numpystatus = False
-        pass
-    pass
+
 
 def _array(sequence, shape):
     if numpystatus:
@@ -63,7 +66,7 @@ def _array(sequence, shape):
         return arr
     else:
         return numarray.array(sequence, type=numarray.Float32, shape=shape)
-    pass
+
 
 def _scalarize(value):
     """Scalarize a value.
@@ -71,7 +74,7 @@ def _scalarize(value):
     If VALUE is a list that consists of a single element, return that
     element.  Otherwise return VALUE."""
 
-    if type(value) == list and len(value) == 1:
+    if isinstance(value, list) and len(value) == 1:
         return value[0]
     return value
 
@@ -82,7 +85,7 @@ def _vectorize(value):
     If VALUE is a scalar, return a list consisting of that scalar.
     Otherwise return VALUE."""
 
-    if type(value) != list:
+    if not isinstance(value, list):
         return [value]
     return value
 
@@ -90,8 +93,8 @@ def _vectorize(value):
 def _rstrip(value):
     """Strip trailing whitespace."""
 
-    if type(value) == list:
-        return [str.rstrip()  for str in value]
+    if isinstance(value, list):
+        return [str.rstrip() for str in value]
     return value.rstrip()
 
 
@@ -122,7 +125,7 @@ class _AIPSTableRow:
             if name.startswith('_'):
                 continue
             dict[name] = getattr(self, name)
-            pass
+
         return dict
 
     def _findattr(self, name):
@@ -130,8 +133,8 @@ class _AIPSTableRow:
 
         if name in self._fields:
             return self._fields[name]
-        msg =  "%s instance has no attribute '%s'" % \
-              (self.__class__.__name__, name)
+        msg = "%s instance has no attribute '%s'" % \
+            (self.__class__.__name__, name)
         raise AttributeError(msg)
 
     def __getattr__(self, name):
@@ -190,15 +193,15 @@ class AIPSTableRow(_AIPSTableRow):
                 # Boolean.
                 self._row[field] = repeat * [False]
             else:
-                msg =  "Unimplemented type %d for field %s" % (type, field)
+                msg = "Unimplemented type %d for field %s" % (type, field)
                 raise AssertionError(msg)
             continue
         return
 
     def update(self):
         # A row instantiated by the AIPSTableRow class cannot be updated.
-        msg =  "%s instance has no attribute 'update'" % \
-              self.__class__.__name__
+        msg = "%s instance has no attribute 'update'" % \
+            self.__class__.__name__
         raise AttributeError(msg)
 
     pass                                # AIPSTableRow
@@ -241,9 +244,9 @@ class _AIPSTableKeywords:
         key = key.upper().ljust(8)
         try:
             _type = InfoList.PGet(self._table.IODesc.List, key)[2]
-        except:
+        except BaseException:
             # New keys are either strings or floats.
-            if type(value) == str:
+            if isinstance(value, str):
                 _type = 13
             else:
                 _type = 9
@@ -276,9 +279,9 @@ class _AIPSTableKeywords:
         elif _type == 14:
             value = bool(value)
             InfoList.PAlwaysPutBoolean(self._table.Desc.List, key,
-                                      [1, 1, 1, 1, 1], _vectorize(value))
+                                       [1, 1, 1, 1, 1], _vectorize(value))
             InfoList.PAlwaysPutBoolean(self._table.IODesc.List, key,
-                                      [1, 1, 1, 1, 1], _vectorize(value))
+                                       [1, 1, 1, 1, 1], _vectorize(value))
         else:
             raise AssertionError("not implemented")
         Table.PDirty(self._table)
@@ -470,7 +473,7 @@ class _AIPSVisibility(object):
                 self._ant1 = self._desc['ptype'].index('ANTENNA1')
                 self._ant2 = self._desc['ptype'].index('ANTENNA2')
                 self._subarray = self._desc['ptype'].index('SUBARRAY')
-            except:
+            except BaseException:
                 pass
             pass
         self._first = 0
@@ -528,6 +531,7 @@ class _AIPSVisibility(object):
         v = self._buffer[self._index][self._desc['ilocv']]
         w = self._buffer[self._index][self._desc['ilocw']]
         return [u, v, w]
+
     def _set_uvw(self, value):
         self._buffer[self._index][self._desc['ilocu']] = value[0]
         self._buffer[self._index][self._desc['ilocv']] = value[1]
@@ -536,6 +540,7 @@ class _AIPSVisibility(object):
 
     def _get_time(self):
         return self._buffer[self._index][self._desc['iloct']]
+
     def _set_time(self, value):
         self._buffer[self._index][self._desc['iloct']] = value
     time = property(_get_time, _set_time)
@@ -547,6 +552,7 @@ class _AIPSVisibility(object):
             return [ant1, ant2]
         baseline = int(self._buffer[self._index][self._desc['ilocb']])
         return [baseline / 256, baseline % 256]
+
     def _set_baseline(self, value):
         if self._ant1 and self._ant2:
             self._buffer[self._index][self._ant1] = value[0]
@@ -561,6 +567,7 @@ class _AIPSVisibility(object):
             return int(self._buffer[self._index][self._subarray])
         ilocb = self._buffer[self._index][self._desc['ilocb']]
         return int((ilocb - int(ilocb)) * 100 + 0.5) + 1
+
     def _set_subarray(self, value):
         if self._subarray:
             self._buffer[self._index][self._subarray] = value
@@ -571,46 +578,50 @@ class _AIPSVisibility(object):
     subarray = property(_get_subarray, _set_subarray)
 
     def _get_source(self):
-	rnd_indx = self._desc['ilocsu']
-	if rnd_indx == -1:
-		raise KeyError('Random Parameter not present')
+        rnd_indx = self._desc['ilocsu']
+        if rnd_indx == -1:
+            raise KeyError('Random Parameter not present')
         return self._buffer[self._index][rnd_indx]
+
     def _set_source(self, value):
-	rnd_indx = self._desc['ilocsu']
-	if rnd_indx == -1:
-		raise KeyError('Random Parameter not present')
+        rnd_indx = self._desc['ilocsu']
+        if rnd_indx == -1:
+            raise KeyError('Random Parameter not present')
         self._buffer[self._index][rnd_indx] = value
     source = property(_get_source, _set_source)
 
     def _get_freqsel(self):
-	rnd_indx = self._desc['ilocfq']
-	if rnd_indx == -1:
-		raise KeyError('Random Parameter not present')
+        rnd_indx = self._desc['ilocfq']
+        if rnd_indx == -1:
+            raise KeyError('Random Parameter not present')
         return self._buffer[self._index][rnd_indx]
+
     def _set_freqsel(self, value):
-	rnd_indx = self._desc['ilocfq']
-	if rnd_indx == -1:
-		raise KeyError('Random Parameter not present')
+        rnd_indx = self._desc['ilocfq']
+        if rnd_indx == -1:
+            raise KeyError('Random Parameter not present')
         self._buffer[self._index][rnd_indx] = value
         return
     freqsel = property(_get_freqsel, _set_freqsel)
 
     def _get_inttim(self):
         return self._buffer[self._index][self._desc['ilocit']]
+
     def _set_inttim(self, value):
         self._buffer[self._index][self._desc['ilocit']] = value
         return
     inttim = property(_get_inttim, _set_inttim)
 
     def _get_corrid(self):
-	rnd_indx = self._desc['ilocid']
-	if rnd_indx == -1:
-		raise KeyError('Random Parameter not present')
+        rnd_indx = self._desc['ilocid']
+        if rnd_indx == -1:
+            raise KeyError('Random Parameter not present')
         return self._buffer[self._index][rnd_indx]
+
     def _set_corrid(self, value):
-	rnd_indx = self._desc['ilocid']
-	if rnd_indx == -1:
-		raise KeyError('Random Parameter not present')
+        rnd_indx = self._desc['ilocid']
+        if rnd_indx == -1:
+            raise KeyError('Random Parameter not present')
         self._buffer[self._index][rnd_indx] = value
         return
     corrid = property(_get_corrid, _set_corrid)
@@ -621,6 +632,7 @@ class _AIPSVisibility(object):
         shape = (inaxes[3], inaxes[2], inaxes[1], inaxes[0])
         visibility.shape = shape
         return visibility
+
     def _set_visibility(self, value):
         if numpystatus:
             value = value.ravel()
@@ -634,7 +646,7 @@ class _AIPSVisibility(object):
 
 
 class _AIPSVisibilityIter(_AIPSVisibility):
-    def __init__(self, data, err, ranges = []):
+    def __init__(self, data, err, ranges=[]):
         if data.Desc.Dict['firstVis'] > 0:
             data.Open(3, err)
 
@@ -652,7 +664,7 @@ class _AIPSVisibilityIter(_AIPSVisibility):
         if self._index + self._first > self._range[1]:
             try:
                 self._range = self._ranges.pop(0)
-            except:
+            except BaseException:
                 pass
 
         while self._first + self._count < self._range[0]:
@@ -662,7 +674,7 @@ class _AIPSVisibilityIter(_AIPSVisibility):
         if self._index + self._first < self._range[0]:
             self._index = self._range[0] - self._first
             pass
-            
+
         if self._index + self._first >= self._range[1]:
             if self._flush:
                 Obit.UVWrite(self._data.me, self._err.me)
@@ -724,7 +736,7 @@ class _AIPSVisibilitySlice(object):
             pass
         if slice.step and not slice.step == 1:
             msg = 'Stride %d is not supported' % slice.step
-            raise NotimplementedError(msg)
+            raise NotImplementedError(msg)
         self._ranges = [(start, stop)]
         return
 
@@ -751,9 +763,9 @@ class _AIPSDataKeywords:
         key = key.upper().ljust(8)
         try:
             _type = InfoList.PGet(self._data.Desc.List, key)[2]
-        except:
+        except BaseException:
             # New keys are either strings or floats.
-            if type(value) == str:
+            if isinstance(value, str):
                 _type = 13
             else:
                 _type = 9
@@ -778,7 +790,7 @@ class _AIPSDataKeywords:
         elif _type == 14:
             value = bool(value)
             InfoList.PAlwaysPutBoolean(self._table.Desc.List, key,
-                                      [1, 1, 1, 1, 1], _vectorize(value))
+                                       [1, 1, 1, 1, 1], _vectorize(value))
         else:
             raise AssertionError("not implemented")
         self._obit.PDirty(self._data)
@@ -859,7 +871,7 @@ class _AIPSDataHeader(object):
     def __getitem__(self, key):
         if key == 'velref':
             return self._dict['VelReference'] + self._dict['VelDef'] * 256
-        if not key in self._keys:
+        if key not in self._keys:
             raise KeyError(key)
         return self._dict[self._keys[key]]
 
@@ -868,7 +880,7 @@ class _AIPSDataHeader(object):
             self._dict['VelDef'] = value / 256
             self._dict['VelReference'] = value % 256
             return
-        if not key in self._keys:
+        if key not in self._keys:
             raise KeyError(key)
         self._dict[self._keys[key]] = value
         return
@@ -944,15 +956,17 @@ class _AIPSData(object):
         return
 
     _header = None
+
     def _generate_header(self):
         if not self._header:
             self._header = _AIPSDataHeader(self._data, self._obit, self._err)
             pass
         return self._header
     header = property(_generate_header,
-                      doc = 'Header for this data set.')
+                      doc='Header for this data set.')
 
     _keywords = None
+
     def _generate_keywords(self):
         if not self._keywords:
             self._keywords = _AIPSDataKeywords(self._data, self._obit,
@@ -960,14 +974,14 @@ class _AIPSData(object):
             pass
         return self._keywords
     keywords = property(_generate_keywords,
-                        doc = 'Keywords for this data set.')
+                        doc='Keywords for this data set.')
 
     def _generate_tables(self):
         # Reopen the file to make sure the list of tables is updated.
         self._data.Open(3, self._err)
         return TableList.PGetList(self._data.TableList, self._err)
     tables = property(_generate_tables,
-                      doc = 'Tables attached to this data set.')
+                      doc='Tables attached to this data set.')
 
     def _generate_stokes(self):
         """Generate the 'stokes' attribute."""
@@ -1016,9 +1030,12 @@ class _AIPSData(object):
         change the disk number, since that would require copying the
         data."""
 
-        if name == None: name = self._data.Aname
-        if klass == None: klass = self._data.Aclass
-        if seq == None: seq = self._data.Aseq
+        if name is None:
+            name = self._data.Aname
+        if klass is None:
+            klass = self._data.Aclass
+        if seq is None:
+            seq = self._data.Aseq
 
         self._obit.PRename(self._data, self._err, newAIPSName=name.ljust(12),
                            newAIPSClass=klass.ljust(6), newAIPSSeq=seq)
@@ -1134,7 +1151,6 @@ class AIPSImage(_AIPSData):
 
         self._squeezed = True
         return
-        
 
     def attach_table(self, name, version, **kwds):
         """Attach an extension table to this image.
@@ -1210,9 +1226,9 @@ class AIPSUVData(_AIPSData):
             self._data.Open(3, self._err)
             self._open = True
             pass
-        if type(name) == str:
+        if isinstance(name, str):
             return _AIPSVisibilitySel(self, name)
-        elif type(name) == slice:
+        elif isinstance(name, slice):
             return _AIPSVisibilitySlice(self, name)
         return _AIPSVisibility(self._data, self._err, name)
 
@@ -1235,7 +1251,7 @@ class AIPSUVData(_AIPSData):
         return self._antennas
 
     antennas = property(_generate_antennas,
-                        doc = 'Antennas in this data set.')
+                        doc='Antennas in this data set.')
 
     def _generate_polarizations(self):
         """Generate the 'polarizations' attribute.
@@ -1246,14 +1262,10 @@ class AIPSUVData(_AIPSData):
             for stokes in self.stokes:
                 if len(stokes) == 2:
                     for polarization in stokes:
-                        if not polarization in self._polarizations:
+                        if polarization not in self._polarizations:
                             self._polarizations.append(polarization)
-                            pass
-                        continue
-                    pass
-                continue
-            pass
         return self._polarizations
+
     polarizations = property(_generate_polarizations,
                              doc='Polarizations in this data set.')
 
@@ -1264,8 +1276,7 @@ class AIPSUVData(_AIPSData):
             sutable = self.table('SU', 0)
             for source in sutable:
                 self._sources.append(source.source.rstrip())
-                continue
-            pass
+
         return self._sources
     sources = property(_generate_sources,
                        doc='Sources in this data set.')
