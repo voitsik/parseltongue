@@ -17,11 +17,11 @@
 
 # This module provides the AIPSTask class.  It adapts the Task class from
 # the Task module to be able to run classic AIPS tasks:
-# 
+#
 # >>> imean = AIPSTask('imean')
-# 
+#
 # The resulting class instance has all associated adverbs as attributes:
-# 
+#
 # >>> print imean.ind
 # 0.0
 # >>> imean.ind = 1
@@ -30,9 +30,9 @@
 # >>> imean.indi = 2.0
 # >>> print imean.ind
 # 2.0
-# 
+#
 # It also knows the range for these attributes:
-# 
+#
 # >>> imean.ind = -1
 # Traceback (most recent call last):
 #   ...
@@ -41,54 +41,54 @@
 # Traceback (most recent call last):
 #   ...
 # ValueError: value '10.0' is out of range for attribute 'indisk'
-# 
+#
 # >>> imean.inc = 'UVDATA'
-# 
+#
 # >>> print imean.inclass
 # UVDATA
-# 
+#
 # >>> imean.blc[1:] = [128, 128]
 # >>> print imean.blc
 # [None, 128.0, 128.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-# 
+#
 # >>> imean.blc = AIPSList([256, 256])
 # >>> print imean.blc
 # [None, 256.0, 256.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-# 
+#
 # It doesn't hurt to apply AIPSList to a scalar:
 # >>> AIPSList(1)
 # 1
-# 
+#
 # And it works on matrices (lists of lists) too:
 # >>> AIPSList([[1,2],[3,4],[5,6]])
 # [None, [None, 1, 2], [None, 3, 4], [None, 5, 6]]
-# 
+#
 # It should also work for strings:
 # >>> AIPSList('foobar')
 # 'foobar'
 # >>> AIPSList(['foo', 'bar'])
 # [None, 'foo', 'bar']
-# 
+#
 # The AIPSTask class implements the copy method:
-# 
+#
 # >>> imean2 = imean.copy()
 # >>> print imean2.inclass
 # UVDATA
 # >>> imean2.inclass = 'SPLIT'
 # >>> print imean.inclass
 # UVDATA
-# 
+#
 # It also implements the == operator, which checks whether task name and
 # inputs match:
-# 
+#
 # >>> imean2 == imean
 # False
 # >>> imean2.inclass = 'UVDATA'
 # >>> imean2 == imean
 # True
-# 
+#
 # Make sure we handle multi-dimensional arrays correctly:
-# 
+#
 # >>> sad = AIPSTask('sad')
 # >>> sad.dowidth[1][1:] = [2, 2, 2]
 # >>> sad.dowidth[1]
@@ -97,17 +97,26 @@
 # [None, 1.0, 1.0, 1.0]
 
 
+# Generic Python stuff.
+import copy
+import fcntl
+# import glob
+import os
+# import pickle
+import pydoc
+import select
+import signal
+import sys
+
 # Global AIPS defaults.
-import AIPS, AIPSTV
+import AIPS
+import AIPSTV
 
 # Generic Task implementation.
 from Task import Task, List
 
 # Default proxy.
 import LocalProxy
-
-# Generic Python stuff.
-import copy, fcntl, glob, os, pickle, pydoc, select, signal, sys
 
 
 class AIPSTask(Task):
@@ -201,7 +210,7 @@ class AIPSTask(Task):
         self._help_string = params['help_string']
         self._explain_string = params['explain_string']
         for adverb in self._default_dict:
-            if type(self._default_dict[adverb]) == list:
+            if isinstance(self._default_dict[adverb], list):
                 value = self._default_dict[adverb]
                 self._default_dict[adverb] = List(self, adverb, value)
 
@@ -212,26 +221,20 @@ class AIPSTask(Task):
         for name in self._disk_adverbs:
             if name in self._max_dict:
                 self._max_dict[name] = float(len(AIPS.disks) - 1)
-                pass
-            continue
 
         # The maximum channel is system-dependent.
         for name in self._chan_adverbs:
             if name in self._max_dict:
                 # Assume the default
                 self._max_dict[name] = 16384.0
-                pass
-            continue
 
         # The maximum image size is system-dependent.
         for name in self._box_adverbs:
             if name in self._max_dict:
                 # Assume the default
                 self._max_dict[name] = 32768.0
-                pass
-            continue
 
-        return                          # __init__
+        # __init__
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
@@ -243,7 +246,7 @@ class AIPSTask(Task):
         for adverb in self._input_list:
             if self.__dict__[adverb] != other.__dict__[adverb]:
                 return False
-            continue
+
         return True
 
     def copy(self):
@@ -251,15 +254,13 @@ class AIPSTask(Task):
         task.userno = self.userno
         for adverb in self._input_list:
             task.__dict__[adverb] = self.__dict__[adverb]
-            continue
+
         return task
 
     def defaults(self):
         """Set adverbs to their defaults."""
         for attr in self._default_dict:
             self.__dict__[attr] = copy.copy(self._default_dict[attr])
-            continue
-        return
 
     def __display_adverbs(self, adverbs):
         """Display ADVERBS."""
@@ -270,10 +271,6 @@ class AIPSTask(Task):
             else:
                 value = PythonList(self.__dict__[adverb])
                 print("'%s': %s" % (adverb, value))
-                pass
-            continue
-
-        return
 
     def explain(self):
         """Display more help for this task."""
@@ -282,29 +279,22 @@ class AIPSTask(Task):
             pydoc.pager(self._help_string +
                         64 * '-' + '\n' +
                         self._explain_string)
-            pass
-
-        return
 
     def inputs(self):
         """Display all inputs for this task."""
         self.__display_adverbs(self._input_list)
-        return
 
     def outputs(self):
         """Display all outputs for this task."""
         self.__display_adverbs(self._output_list)
-        return
 
     def _retype(self, value):
         """ Recursively transform a 'List' into a 'list' """
 
-        if type(value) == List:
+        if isinstance(value, List):
             value = list(value)
             for i in range(1, len(value)):
                 value[i] = self._retype(value[i])
-                continue
-            pass
 
         return value
 
@@ -331,12 +321,12 @@ class AIPSTask(Task):
                     url = AIPS.disks[disk].url
                     proxy = AIPS.disks[disk].proxy()
                     proxy.__nonzero__ = lambda: True
-                    pass
+
                 if AIPS.disks[disk].url != url:
-                    raise RuntimeError("AIPS disks are not on the same machine")
+                    raise RuntimeError(
+                        "AIPS disks are not on the same machine")
                 input_dict[adverb] = float(AIPS.disks[disk].disk)
-                pass
-            continue
+
         if not proxy:
             proxy = LocalProxy
             proxy.__nonzero__ = lambda: True
@@ -344,8 +334,7 @@ class AIPSTask(Task):
                 if adverb in input_dict:
                     proxy = None
                     break
-                continue
-            pass
+
         if not proxy:
             raise RuntimeError("Unable to determine where to execute task")
 
@@ -377,8 +366,7 @@ class AIPSTask(Task):
             self._message_list.append(message[1])
             if message[0] > abs(self.msgkill):
                 print(message[1])
-                pass
-            continue
+
         return [message[1] for message in messages]
 
     def feed(self, proxy, tid, banana):
@@ -396,8 +384,6 @@ class AIPSTask(Task):
         output_dict = inst.wait(tid)
         for adverb in self._output_list:
             self.__dict__[adverb] = output_dict[adverb]
-            continue
-        return
 
     def abort(self, proxy, tid, sig=signal.SIGTERM):
         """Abort the task specified by PROXY and TID."""
@@ -421,7 +407,7 @@ class AIPSTask(Task):
                     elif sys.stdout.isatty() and len(rotator) > 0:
                         sys.stdout.write(rotator[count % len(rotator)])
                         sys.stdout.flush()
-                        pass
+
                     events = select.select([sys.stdin.fileno()], [], [], 0)
                     if sys.stdin.fileno() in events[0]:
                         flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
@@ -433,37 +419,33 @@ class AIPSTask(Task):
                         if message:
                             self.feed(proxy, tid, message)
                         rotator = []
-                        pass
+
                     count += 1
-                    continue
-                pass
             except KeyboardInterrupt as exception:
                 self.abort(proxy, tid)
                 raise exception
 
             self.wait(proxy, tid)
         finally:
-                    if self.log:
-                        for message in loglist:
-                            self.log.write('%s\n' % message)
-                            continue
-                        self.log.flush()
-                        pass
-		    if AIPS.log:
-                        for message in loglist:
-                            AIPS.log.write('%s\n' % message)
-                            continue
-                        AIPS.log.flush()
-                        pass
-                    pass
-        return
+            if self.log:
+                for message in loglist:
+                    self.log.write('%s\n' % message)
+
+                self.log.flush()
+
+            if AIPS.log:
+                for message in loglist:
+                    AIPS.log.write('%s\n' % message)
+
+                AIPS.log.flush()
 
     def __call__(self):
         return self.go()
 
     def __getattr__(self, name):
         if name in self._data_adverbs:
-            class _AIPSData: pass
+            class _AIPSData:
+                pass
             value = _AIPSData()
             prefix = name.replace('data', '')
             value.name = Task.__getattr__(self, prefix + 'name')
@@ -490,8 +472,8 @@ class AIPSTask(Task):
             # pathname.  The backend will split of the direcrory
             # component and use that as an "area".
             attr = self._findattr(name)
-            if attr in self._file_adverbs and type(value) == str and \
-                   os.path.dirname(value):
+            if attr in self._file_adverbs and isinstance(value, str) and \
+                    os.path.dirname(value):
                 if len(os.path.basename(value)) > self._strlen_dict[attr] - 2:
                     msg = "string '%s' is too long for attribute '%s'" \
                           % (value, attr)
@@ -499,11 +481,8 @@ class AIPSTask(Task):
                 self.__dict__[attr] = value
             else:
                 Task.__setattr__(self, name, value)
-                pass
-            pass
-        return
 
-    pass                                # class AIPSTask
+# class AIPSTask
 
 
 class AIPSMessageLog:
@@ -515,7 +494,6 @@ class AIPSMessageLog:
         # Update default user number.
         if self.userno == -1:
             self.userno = AIPS.userno
-        return
 
     def zap(self):
         """Zap message log."""
@@ -524,10 +502,10 @@ class AIPSMessageLog:
         inst = getattr(proxy, self.__class__.__name__)
         return inst.zap(self.userno)
 
-    pass                                # class AIPSMessageLog
+# class AIPSMessageLog
 
 
-def AIPSList(list):
+def AIPSList(list_):
     """Transform a Python array into an AIPS array.
 
     Returns a list suitable for using 1-based indices.
@@ -535,50 +513,48 @@ def AIPSList(list):
 
     try:
         # Make sure we don't consider strings to be lists.
-        if str(list) == list:
-            return list
-        pass
-    except:
+        if str(list_) == list_:
+            return list_
+    except Exception:
         pass
 
     try:
         # Insert 'None' at index zero, and transform LIST's elements.
         _list = [None]
-        for l in list:
-            _list.append(AIPSList(l))
-            continue
+        for item in list_:
+            _list.append(AIPSList(item))
         return _list
-    except:
+    except Exception:
         pass
-    
+
     # Apparently LIST isn't a list; simply return it unchanged.
-    return list
+    return list_
 
 
-def PythonList(list):
+def PythonList(list_):
     """Transform an AIPS array into a Python array.
 
     Returns a list suitable for using normal 0-based indices.
     """
 
     try:
-        if list[0] != None:
-            return list
+        if list_[0] is not None:
+            return list_
 
         _list = []
-        for l in list[1:]:
-            _list.append(PythonList(l))
-            continue
+        for item in list_[1:]:
+            _list.append(PythonList(item))
+
         return _list
-    except:
+    except Exception:
         pass
-    
+
     # Apparently LIST isn't a list; simply return it unchanged.
-    return list
+    return list_
 
 
 # Tests.
 if __name__ == '__main__':
-    import doctest, sys
+    import doctest
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])
