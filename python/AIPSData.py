@@ -73,6 +73,7 @@ import sys
 # automatically makes it callable as a method of both AIPSImage and
 # AIPSUVData.
 
+
 def _whoami():
     """Return the name of the function that called us."""
     return sys._getframe(1).f_code.co_name
@@ -102,14 +103,13 @@ class _AIPSDataDesc:
         self.disk = disk
         self.seq = seq
         self.userno = userno
-        return
 
     # Provide a dictionary-like interface to deal with the
     # idiosyncrasies of XML-RPC.
     def __getitem__(self, key):
         return self.__dict__[key]
 
-    pass                                # class _AIPSDataDesc
+# class _AIPSDataDesc
 
 
 class _dictify(dict):
@@ -117,17 +117,17 @@ class _dictify(dict):
     def __getattr__(self, item):
         return self[item]
 
-    pass                                # class _dictify
+# class _dictify
 
 
 class _AIPSDataHeader(_dictify):
 
     """This class describes the header of an AIPS image or UV data set."""
 
-    pass                                # class _AIPSDataHeader
+# class _AIPSDataHeader
 
 
-class _AIPSData(object):
+class _AIPSData():
 
     """This class describes generic AIPS data."""
 
@@ -157,8 +157,6 @@ class _AIPSData(object):
             userno = -1
             if len(args) == 5:
                 userno = args[4]
-                pass
-            pass
 
         if userno == -1:
             userno = AIPS.userno
@@ -166,26 +164,37 @@ class _AIPSData(object):
         disk = AIPS.disks[disk]
         self.desc = _AIPSDataDesc(name, klass, disk.disk, seq, userno)
         self.proxy = disk.proxy()
-        return
 
-    def _set_name(self, name): self.desc.name = name; pass
+    def _set_name(self, name):
+        self.desc.name = name
+
     name = property(lambda self: self.desc.name, _set_name,
                     doc='Name of this data set.')
-    def _set_klass(self, klass): self.desc.klass = klass; pass
+
+    def _set_klass(self, klass):
+        self.desc.klass = klass
+
     klass = property(lambda self: self.desc.klass, _set_klass,
                      doc='Class of this data set.')
+
     def _set_disk(self, disk):
         self._disk = disk
         disk = AIPS.disks[disk]
         self.desc.disk = disk.disk
         self.proxy = disk.proxy()
-        pass
+
     disk = property(lambda self: self._disk, _set_disk,
                     doc='Disk where this data set is stored.')
-    def _set_seq(self, seq): self.desc.seq = seq; pass
+
+    def _set_seq(self, seq):
+        self.desc.seq = seq
+
     seq = property(lambda self: self.desc.seq, _set_seq,
                    doc='Sequence number of this data set.')
-    def _set_userno(self, userno): self.desc.userno = userno; pass
+
+    def _set_userno(self, userno):
+        self.desc.userno = userno
+
     userno = property(lambda self: self.desc.userno, _set_userno,
                       doc='User number used to access this data set.')
 
@@ -275,12 +284,18 @@ class _AIPSData(object):
         new sequence number for the data set.  Note that you can't
         change the disk number, since that would require copying the
         data."""
-        if name == None: name = self.name
-        if klass == None: klass = self.klass
-        if seq == None: seq = self.seq
-        if 'name' in kwds: name = kwds['name']
-        if 'klass' in kwds: klass = kwds['name']
-        if 'seq' in kwds: seq = kwds['seq']
+        if name is None:
+            name = self.name
+        if klass is None:
+            klass = self.klass
+        if seq is None:
+            seq = self.seq
+        if 'name' in kwds:
+            name = kwds['name']
+        if 'klass' in kwds:
+            klass = kwds['name']
+        if 'seq' in kwds:
+            seq = kwds['seq']
         result = self._method(_whoami())(self.desc, name, klass, seq)
         self.name = result[0]
         self.klass = result[1]
@@ -321,7 +336,7 @@ class _AIPSData(object):
     def _generate_antennas(self):
         return self._method('antennas')(self.desc)
     antennas = property(_generate_antennas,
-                        doc = 'Antennas in this data set.')
+                        doc='Antennas in this data set.')
 
     def _generate_polarizations(self):
         return self._method('polarizations')(self.desc)
@@ -338,19 +353,17 @@ class _AIPSData(object):
     stokes = property(_generate_stokes,
                       doc='Stokes parameters for this data set.')
 
-    pass                                # class AIPSData
+# class AIPSData
 
 
 class AIPSImage(_AIPSData):
 
     """This class describes an AIPS image."""
-    pass
 
 
 class AIPSUVData(_AIPSData):
 
     """This class describes an AIPS UV data set."""
-    pass
 
 
 class _AIPSTableMethod(_AIPSDataMethod):
@@ -366,14 +379,14 @@ class _AIPSTableMethod(_AIPSDataMethod):
         return func(self.inst._data.desc,
                     self.inst._name, self.inst._version, *args)
 
-    pass                                # class _AIPSTableMethod
+# class _AIPSTableMethod
 
 
 class _AIPSTableRow(_dictify):
 
     """This class describes a row of an AIPS extenstion table."""
 
-    pass                                # class _AIPSTableRow
+# class _AIPSTableRow
 
 
 class _AIPSTableIter:
@@ -384,7 +397,6 @@ class _AIPSTableIter:
         self._table = table
         self._len = len(self._table)
         self._index = 0
-        return
 
     def __next__(self):
         if self._index >= self._len:
@@ -393,10 +405,10 @@ class _AIPSTableIter:
         self._index += 1
         return result
 
-    pass                                # class _AIPSTableIter
-    
+# class _AIPSTableIter
 
-class _AIPSTable(object):
+
+class _AIPSTable():
 
     """This class describes a generic AIPS extension table."""
 
@@ -404,7 +416,6 @@ class _AIPSTable(object):
         self._data = data
         self._name = name
         self._version = version
-        return
 
     def __getattr__(self, name):
         return _AIPSTableMethod(self, name)
@@ -432,7 +443,7 @@ class _AIPSTable(object):
         return _AIPSTableMethod(self, 'version')()
     version = property(_generate_version, doc='Table version.')
 
-    pass                                # class _AIPSTable
+# class _AIPSTable
 
 
 class _AIPSHistoryMethod(_AIPSDataMethod):
@@ -447,31 +458,30 @@ class _AIPSHistoryMethod(_AIPSDataMethod):
         func = self.inst._data._method(self.name + '_history')
         return func(self.inst._data.desc, *args)
 
-    pass                                # class _AIPSHistoryMethod
+# class _AIPSHistoryMethod
 
 
-class _AIPSHistory(object):
+class _AIPSHistory():
 
     """This class describes an AIPS hostory table."""
 
     def __init__(self, data):
         self._data = data
-        return
 
     def __getitem__(self, key):
         return _AIPSHistoryMethod(self, '_getitem')(key)
 
-    pass                                # class _AIPSHistory
+# class _AIPSHistory
 
 
 class _AIPSCatEntry(_dictify):
 
     """This class describes an AIPS catalog entry."""
 
-    pass                                # class _AIPSCatEntry
+# class _AIPSCatEntry
 
 
-class AIPSCat(object):
+class AIPSCat():
 
     """This class describes an entire AIPS catalogue."""
 
@@ -479,15 +489,12 @@ class AIPSCat(object):
         disks = [disk]
         if disk == 0:
             disks = list(range(1, len(AIPS.disks)))
-            pass
-            
+
         self._cat = {}
         for disk in disks:
             proxy = AIPS.disks[disk].proxy()
             catalog = proxy.AIPSCat.cat(AIPS.disks[disk].disk, AIPS.userno)
             self._cat[disk] = [_AIPSCatEntry(entry) for entry in catalog]
-            continue
-        return
 
     def __getitem__(self, key):
         return self._cat[key]
@@ -504,24 +511,28 @@ class AIPSCat(object):
             s += 'Catalog on disk %2d\n' % disk
             s += ' Cat Mapname      Class   Seq  Pt     Last access\n'
             if len(self._cat[disk]) > 0:
-                s += ''.join([' %3d %-12.12s.%-6.6s. %4d %-2.2s %s %s\n' \
+                s += ''.join([' %3d %-12.12s.%-6.6s. %4d %-2.2s %s %s\n'
                               % (entry.cno, entry.name, entry.klass,
                                  entry.seq, entry.type, entry.date,
                                  entry.time) for entry in self._cat[disk]])
-                pass
-            continue
+
         return s.strip()
 
     def zap(self, force=False, **kwds):
-
         """Removes a catalogue entry."""
 
         name = None
-        if 'name' in kwds: name = kwds['name']; del kwds['name']
+        if 'name' in kwds:
+            name = kwds['name']
+            del kwds['name']
         klass = None
-        if 'klass' in kwds: klass = kwds['klass']; del kwds['klass']
+        if 'klass' in kwds:
+            klass = kwds['klass']
+            del kwds['klass']
         seq = None
-        if 'seq' in kwds: seq = kwds['seq']; del kwds['seq']
+        if 'seq' in kwds:
+            seq = kwds['seq']
+            del kwds['seq']
 
         # Make sure we don't zap if the user made a typo.
         if len(kwds) > 0:
@@ -543,16 +554,14 @@ class AIPSCat(object):
                 elif entry['type'] == 'UV':
                     AIPSUVData(entry['name'], entry['klass'],
                                disk, entry['seq']).zap(force)
-                    pass
                 continue
             continue
-        return
 
-    pass                                # class AIPSCat
+# class AIPSCat
 
 
 # Tests.
 if __name__ == '__main__':
-    import doctest, sys
+    import doctest
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])
