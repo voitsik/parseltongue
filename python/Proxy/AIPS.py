@@ -17,7 +17,7 @@
 class AIPS:
 
     """Container for several AIPS-related default values."""
-    
+
     # Default AIPS systen format revision.
     revision = 'D'
 

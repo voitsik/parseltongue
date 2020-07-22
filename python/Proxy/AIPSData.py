@@ -22,14 +22,18 @@ AIPSUVData objects.
 """
 
 # Bits from Obit.
-import Obit, OErr, OSystem
+import Obit
+import OErr
+import OSystem
 import AIPSDir
-import Image, UV
+import Image
+import UV
 import TableList
 
 # Wizardry bits.
 from Wizardry.AIPSData import AIPSUVData as WAIPSUVData
 from Wizardry.AIPSData import AIPSImage as WAIPSImage
+
 
 class AIPSData:
     def __init__(self):
@@ -42,7 +46,7 @@ class AIPSData:
 
         assert(not self.err.isErr)
         cno = Obit.AIPSDirFindCNO(desc['disk'], desc['userno'], desc['name'],
-                                  desc['klass'], self.type,  desc['seq'],
+                                  desc['klass'], self.type, desc['seq'],
                                   self.err.me)
         if cno == -1:
             OErr.PClear(self.err)
@@ -91,7 +95,7 @@ class AIPSData:
 
     def clrstat(self, desc):
         """Unsets the 'busy' state in the AIPS catalogue. Useful should an
-		AIPS task die mid-step."""
+                AIPS task die mid-step."""
         self._init(desc).clrstat()
         return True                # Return something other than None.
 
