@@ -22,7 +22,12 @@ objects.
 """
 
 # Generic Python stuff.
-import fcntl, os, pty, select, signal
+import fcntl
+import os
+import pty
+import select
+import signal
+
 
 class Task:
     def __init__(self):
@@ -59,16 +64,14 @@ class Task:
                 if len(messages) > 0:
                     messages = messages.split('\r\n')
                     return [msg for msg in messages if msg]
-            except:
+            except Exception:
                 pass
-
-            pass
 
         # If reading failed, it's (probably) because the child
         # process died.
         (pid, status) = os.waitpid(self._pid[tid], os.WNOHANG)
         if pid:
-            assert(pid == self._pid[tid])
+            assert pid == self._pid[tid]
             if os.WIFEXITED(status) or os.WIFSIGNALED(status):
                 self._pid[tid] = 0
         return []
@@ -77,22 +80,19 @@ class Task:
         """Feed the task."""
 
         os.write(tid, banana)
-        pass
 
     def wait(self, tid):
         """Wait for the task to finish."""
 
-        assert(self.finished(tid))
+        assert self.finished(tid)
 
         del self._pid[tid]
         os.close(tid)
-        return
 
     def abort(self, tid, sig=signal.SIGINT):
         """Abort a task."""
 
-        os.kill (self._pid[tid], sig)
+        os.kill(self._pid[tid], sig)
 
         del self._pid[tid]
         os.close(tid)
-        return
