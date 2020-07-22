@@ -23,7 +23,8 @@ used by the AIPSTask and AIPSData modules.
 """
 
 # Generic Python stuff.
-import os, sys
+import os
+import sys
 
 # Generic AIPS functionality.
 from AIPSUtil import ehex
@@ -32,12 +33,12 @@ from AIPSUtil import ehex
 debuglog = None
 
 # Available proxies.
-import LocalProxy
 from xmlrpc.client import ServerProxy
+import LocalProxy
 
 
 class AIPSDisk:
-    
+
     """Class representing a (possibly remote) AIPS disk.  An instance
        of this class stores an AIPS disk number and the URL of the
        proxy through which it can be accessed.  For local AIPS disks
@@ -55,25 +56,24 @@ class AIPSDisk:
             return ServerProxy(self.url, allow_none=True)
         return LocalProxy
 
-    pass                                # class AIPSDisk
+# class AIPSDisk
 
 
 # Default AIPS user ID.
 userno = 0
 
 # List of available proxies.
-proxies = [ LocalProxy ]
+proxies = [LocalProxy]
 
-# AIPS disk mapping. 
-disks = [ None ]                        # Disk numbers are one-based.
+# AIPS disk mapping.
+disks = [None]                        # Disk numbers are one-based.
 
 # AIPS seems to support a maximum of 35 disks.
 for disk in range(1, 36):
     area = 'DA' + ehex(disk, 2, '0')
-    if not area in os.environ:
+    if area not in os.environ:
         break
     disks.append(AIPSDisk(None, disk))
-    continue
 
 # Message log.
 log = None
@@ -82,34 +82,39 @@ log = None
 # The code below is the result of a serious design flaw.  It should
 # really die, but removing it will probably affect most scripts.
 
-class _AIPS(object):
-    
+class _AIPS():
+
     """Backwards compatibility gunk."""
 
     def _get_userno(self):
         return sys.modules[__name__].userno
+
     def _set_userno(self, value):
         sys.modules[__name__].userno = value
     userno = property(_get_userno, _set_userno)
 
     def _get_disks(self):
         return sys.modules[__name__].disks
+
     def _set_disks(self, value):
         sys.modules[__name__].disks = value
     disks = property(_get_disks, _set_disks)
 
     def _get_log(self):
         return sys.modules[__name__].log
+
     def _set_log(self, value):
         sys.modules[__name__].log = value
     log = property(_get_log, _set_log)
 
     def _get_debuglog(self):
         return sys.modules[__name__].debuglog
+
     def _set_debuglog(self, value):
         sys.modules[__name__].debuglog = value
     debuglog = property(_get_debuglog, _set_debuglog)
 
-    pass                                # class _AIPS
+# class _AIPS
+
 
 AIPS = _AIPS()
