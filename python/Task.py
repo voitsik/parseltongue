@@ -113,10 +113,13 @@ ValueError: setting element '0' is prohibited
 
 """
 
+# Generic Python stuff
+import copy
+import pydoc
+import sys
+
 from MinimalMatch import MinimalMatch
 
-# Generic Python stuff
-import copy, pydoc, sys
 
 class List(list):
     def __init__(self, task, attr, value):
@@ -128,23 +131,20 @@ class List(list):
                 _value.append(List(task, attr, item))
             else:
                 _value.append(item)
-                pass
-            continue
+
         list.extend(self, _value)
-        return
 
     def __setitem__(self, key, item):
-        if item != None and self[key] == None:
+        if item is not None and self[key] is None:
             msg = "setting element '%d' is prohibited" % key
             raise ValueError(msg)
         item = self._task._validateattr(self._attr, item, self[key])
         list.__setitem__(self, key, item)
-        return
 
     def __setslice__(self, low, high, seq):
-        high = min (high, len(self))
+        high = min(high, len(self))
         if len(seq) > high - low or \
-               (len(seq) < high - low and high < len(self)):
+                (len(seq) < high - low and high < len(self)):
             msg = "slice '%d:%d' changes the array size of" \
                   " attribute '%s'" % (low, high, self._attr)
             raise TypeError(msg)
@@ -154,9 +154,6 @@ class List(list):
             else:
                 default = self._task._default_dict[self._attr][key]
                 self[key] = copy.copy(default)
-                pass
-            continue
-        return
 
 
 class Task(MinimalMatch):
@@ -173,9 +170,6 @@ class Task(MinimalMatch):
 
         if self._help_string:
             pydoc.pager(self._help_string)
-            pass
-
-        return
 
     def _validateattr(self, attr, value, default):
         """Check whether VALUE is a valid valid for attribute ATTR."""
@@ -185,7 +179,7 @@ class Task(MinimalMatch):
             return value
 
         # Short circuit.
-        if value == None and default == None:
+        if value is None and default is None:
             return value
 
         # Handle lists recursively.
@@ -200,12 +194,11 @@ class Task(MinimalMatch):
             return validated_value
 
         # Convert integers into floating point numbers if necessary.
-        if type(value) == int and type(default) == float:
+        if isinstance(value, int) and isinstance(default, float):
             value = float(value)
-            pass
 
         # Check attribute type.
-        if type(value) != type(default):
+        if not isinstance(value, type(default)):
             msg = "value '%s' has invalid type for attribute '%s'" \
                   % (value, attr)
             raise TypeError(msg)
@@ -217,14 +210,13 @@ class Task(MinimalMatch):
                 msg = "value '%s' is out of range for attribute '%s'" \
                       % (value, attr)
                 raise ValueError(msg)
-            pass
+
         if attr in self._max_dict:
             max = self._max_dict[attr]
             if not value <= max:
                 msg = "value '%s' is out of range for attribute '%s'" \
                       % (value, attr)
                 raise ValueError(msg)
-            pass
 
         # Check string length.
         if attr in self._strlen_dict:
@@ -232,7 +224,6 @@ class Task(MinimalMatch):
                 msg = "string '%s' is too long for attribute '%s'" \
                       % (value, attr)
                 raise ValueError(msg)
-            pass
 
         return value
 
@@ -249,6 +240,6 @@ class Task(MinimalMatch):
 
 # Tests.
 if __name__ == '__main__':
-    import doctest, sys
+    import doctest
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])
