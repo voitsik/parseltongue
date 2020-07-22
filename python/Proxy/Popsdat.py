@@ -24,6 +24,7 @@ for AIPS adverbs generated from the POPSDAT.HLP help file.
 # Generic Python stuff.
 import os
 
+
 class Popsdat:
     def __parse(self):
         """Determine default values and string lengths for all AIPS
@@ -68,7 +69,7 @@ class Popsdat:
                     dimy = int(float(split_line[4]))
                     dimx = int(float(split_line[5]))
                     self.default_dict[name] = [None] \
-                                              + dimx * [[None] + dimy * value]
+                        + dimx * [[None] + dimy * value]
                 else:
                     msg = "Cannot handle float arrays of dimension %d" \
                           % dimensions
@@ -120,7 +121,7 @@ class Popsdat:
                     if lparen == -1 or rparen == -1:
                         continue
                     name = array[:lparen].lower()
-                    dim = array[lparen+1:rparen]
+                    dim = array[lparen + 1:rparen]
                     dim = dim.split(',')
                     if len(dim) == 1:
                         length = int(dim[0])
@@ -129,8 +130,8 @@ class Popsdat:
                         dimx = int(dim[0])
                         dimy = int(dim[1])
                         self.default_dict[name] = [None] \
-                                                  + dimx * [[None] \
-                                                            + dimy *[0.0]]
+                            + dimx * [[None]
+                                      + dimy * [0.0]]
                     else:
                         continue
                     continue
@@ -153,7 +154,7 @@ class Popsdat:
         for line in input:
             # Statements follow the adverbs.
             if line.startswith('QUITPOPS'):
-                break;
+                break
             continue
 
         for line in input:
