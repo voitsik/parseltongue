@@ -20,6 +20,7 @@ This module provides some utility functions for dealing with AIPS.
 
 """
 
+
 def ehex(n, width=0, padding=None):
     """Convert a number into "extended hex".
 
@@ -36,11 +37,10 @@ def ehex(n, width=0, padding=None):
         continue
 
     # Pad if requested to do so.
-    if padding != None:
+    if padding is not None:
         while width > 0:
             result = str(padding) + result
             width -= 1
             continue
-        pass
 
     return result
