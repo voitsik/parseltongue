@@ -136,7 +136,7 @@ class List(list):
     def __setitem__(self, key, item):
         if item != None and self[key] == None:
             msg = "setting element '%d' is prohibited" % key
-            raise ValueError, msg
+            raise ValueError(msg)
         item = self._task._validateattr(self._attr, item, self[key])
         list.__setitem__(self, key, item)
         return
@@ -147,8 +147,8 @@ class List(list):
                (len(seq) < high - low and high < len(self)):
             msg = "slice '%d:%d' changes the array size of" \
                   " attribute '%s'" % (low, high, self._attr)
-            raise TypeError, msg
-        for key in xrange(low, high):
+            raise TypeError(msg)
+        for key in range(low, high):
             if key - low < len(seq):
                 self[key] = seq[key - low]
             else:
@@ -193,9 +193,9 @@ class Task(MinimalMatch):
             if len(value) > len(default):
                 msg = "array '%s' is too big for attribute '%s'" \
                       % (value, attr)
-                raise TypeError, msg
+                raise TypeError(msg)
             validated_value = List(self, attr, default)
-            for key in xrange(len(value)):
+            for key in range(len(value)):
                 validated_value[key] = value[key]
             return validated_value
 
@@ -208,7 +208,7 @@ class Task(MinimalMatch):
         if type(value) != type(default):
             msg = "value '%s' has invalid type for attribute '%s'" \
                   % (value, attr)
-            raise TypeError, msg
+            raise TypeError(msg)
 
         # Check range.
         if attr in self._min_dict:
@@ -216,14 +216,14 @@ class Task(MinimalMatch):
             if not min <= value:
                 msg = "value '%s' is out of range for attribute '%s'" \
                       % (value, attr)
-                raise ValueError, msg
+                raise ValueError(msg)
             pass
         if attr in self._max_dict:
             max = self._max_dict[attr]
             if not value <= max:
                 msg = "value '%s' is out of range for attribute '%s'" \
                       % (value, attr)
-                raise ValueError, msg
+                raise ValueError(msg)
             pass
 
         # Check string length.
@@ -231,7 +231,7 @@ class Task(MinimalMatch):
             if len(value) > self._strlen_dict[attr]:
                 msg = "string '%s' is too long for attribute '%s'" \
                       % (value, attr)
-                raise ValueError, msg
+                raise ValueError(msg)
             pass
 
         return value

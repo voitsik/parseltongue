@@ -97,14 +97,14 @@ class MinimalMatch:
                         if match_attr and attr != match_attr:
                             msg = "%s instance attribute '%s' is ambiguous" \
                                   % (self.__class__.__name__, name)
-                            raise AttributeError, msg
+                            raise AttributeError(msg)
                         else:
                             match_attr = attr
 
         if not match_attr:
             msg = "%s instance has no attribute '%s'" \
                   % (self.__class__.__name__, name)
-            raise AttributeError, msg
+            raise AttributeError(msg)
 
         return match_attr
 
@@ -115,7 +115,7 @@ class MinimalMatch:
 
         msg = "%s instance has no attribute '%s'" \
               % (self.__class__.__name__, name)
-        raise AttributeError, msg
+        raise AttributeError(msg)
 
     def __setattr__(self, name, value):
 	attr = self._findattr(name)

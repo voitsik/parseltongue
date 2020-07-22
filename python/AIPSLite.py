@@ -47,7 +47,7 @@ def _arch(version):
 	elif uname[0] == 'Darwin' and uname[4] == 'i386':
 		return 'MACINT'
 	else:
-		raise NotImplementedError, 'Unknown Architecture'
+		raise NotImplementedError('Unknown Architecture')
 
 def _init_environ(path=None, version=None):
 	"""Set required environment variables"""
@@ -66,7 +66,7 @@ def _init_environ(path=None, version=None):
 	elif os.environ['ARCH'] == 'MACINT':
 		lib_env = 'DYLD_LIBRARY_PATH'
 	lib_dir = '%s/%s/LIBR/INTELCMP' % (os.environ['AIPS_VERSION'], os.environ['ARCH'])
-	if os.environ.has_key(lib_env):
+	if lib_env in os.environ:
 		os.environ[lib_env] += ':' + lib_dir
 	else:
 		os.environ[lib_env] = lib_dir
@@ -111,7 +111,7 @@ def _rsync(server, path_list, dest, force=False):
 	args.append(dest)	# Download destination
 	if os.spawnvp(os.P_WAIT, 'rsync', args) != 0:
 		# TODO: Better failure reporting
-		print >> sys.stderr, 'rsync failure'
+		print('rsync failure', file=sys.stderr)
 		sys.exit(-1)
 
 def _make_da00(da00_path=None, force=False):
