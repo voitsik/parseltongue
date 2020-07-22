@@ -23,7 +23,7 @@ abbreviated:
 ...     user = 'root'
 ...     start = 'yesterday'
 ...     stop = 'tomorrow'
-... 
+...
 >>> my_instance = MyClass()
 
 For instance the following command will set the 'user' attribute:
@@ -79,6 +79,7 @@ AttributeError: MyClass instance has no attribute '_does_not_exist'
 
 """
 
+
 class MinimalMatch:
     """ Allow class attribute names to be abbreviated. """
 
@@ -118,12 +119,13 @@ class MinimalMatch:
         raise AttributeError(msg)
 
     def __setattr__(self, name, value):
-	attr = self._findattr(name)
-	self.__dict__[attr] = value
+        attr = self._findattr(name)
+        self.__dict__[attr] = value
 
 
 # Tests.
 if __name__ == '__main__':
-    import doctest, sys
+    import doctest
+    import sys
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])

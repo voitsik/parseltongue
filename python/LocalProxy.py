@@ -41,13 +41,11 @@ try:
 except Exception as exception:
     if AIPS.debuglog:
         print(exception, file=AIPS.debuglog)
-        pass
     else:
         # Print an empty line to make sure the message stands out.
         print()
         print("Warning: can't import AIPSData;", end=' ')
         print("access to local AIPS data won't work: " + str(exception))
-    pass
 else:
     AIPSImage = Proxy.AIPSData.AIPSImage()
     AIPSUVData = Proxy.AIPSData.AIPSUVData()
