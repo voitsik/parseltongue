@@ -34,7 +34,11 @@ class Task:
         self._pid = {}
 
     def spawn(self, path, args, env=None):
-        """Start the task."""
+        """Start the task.
+
+        There appears to be two calls, the first in this something undocumented
+        is done to the terminal and the sceond to actually start the function
+        """
 
         (pid, tid) = pty.fork()
         if pid == 0:
@@ -46,8 +50,10 @@ class Task:
             finally:
                 os._exit(1)
         else:
+            # Setup terminal
             fcntl.fcntl(tid, fcntl.F_SETFL, os.O_NONBLOCK)
             self._pid[tid] = pid
+
             return tid
 
     def finished(self, tid):
@@ -55,31 +61,51 @@ class Task:
         return self._pid[tid] == 0
 
     def messages(self, tid):
-        """Return task's messages."""
+        """Return task's messages.
+
+        Parameters
+        ----------
+        tid : int
+            Task id in pid table of process.
+
+        Returns
+        -------
+            List of messages.
+        """
 
         (iwtd, owtd, ewtd) = select.select([tid], [], [], 0.25)
         if tid in iwtd:
             try:
-                messages = os.read(tid, 1024)
+                messages = os.read(tid, 2048).decode()
+
                 if len(messages) > 0:
                     messages = messages.split('\r\n')
                     return [msg for msg in messages if msg]
-            except Exception:
-                pass
+            except OSError:
+                # If reading failed, it's (probably) because the child
+                # process died.
+                (pid, status) = os.waitpid(self._pid[tid], os.WNOHANG)
+                if pid:
+                    assert pid == self._pid[tid]
+                    if os.WIFEXITED(status) or os.WIFSIGNALED(status):
+                        self._pid[tid] = 0
 
-        # If reading failed, it's (probably) because the child
-        # process died.
-        (pid, status) = os.waitpid(self._pid[tid], os.WNOHANG)
-        if pid:
-            assert pid == self._pid[tid]
-            if os.WIFEXITED(status) or os.WIFSIGNALED(status):
-                self._pid[tid] = 0
         return []
 
     def feed(self, tid, banana):
-        """Feed the task."""
+        """Feed the task.
 
-        os.write(tid, banana)
+        Pass a message to a running task's sdtin.
+
+        Parameters
+        ----------
+        tid : int
+            Task id in pid table of process.
+        bananna : str
+            Message to pass to task input.
+        """
+
+        os.write(tid, banana.encode())
 
     def wait(self, tid):
         """Wait for the task to finish."""

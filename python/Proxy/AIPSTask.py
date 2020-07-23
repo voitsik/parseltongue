@@ -199,7 +199,7 @@ class AIPSTask(Task):
         elif isinstance(value, str):
             strlen = ((params.strlen_dict[adverb] + 3) // 4) * 4
             fmt = "%ds" % strlen
-            file.write(struct.pack(fmt, value.ljust(strlen)))
+            file.write(struct.pack(fmt, value.ljust(strlen).encode('ascii')))
         elif isinstance(value, list):
             for subvalue in value[1:]:
                 self.__write_adverb(params, file, adverb, subvalue)
@@ -234,7 +234,13 @@ class AIPSTask(Task):
         return value
 
     def spawn(self, name, version, userno, msgkill, isbatch, tv, input_dict):
-        """Start the task."""
+        """Start the task.
+
+        Writes task input parameters in the TD file and starts the task
+        asynchronously returning immediately.
+        Messages must be  retrieved calling messages.
+        Attempts to use singel hardcoded AIPS TV.
+        """
 
         params = _AIPSTaskParams(name, version)
         popsno = _allocate_popsno()
@@ -275,7 +281,7 @@ class AIPSTask(Task):
 
             with open(td_name, mode='r+b') as td_file:
                 td_file.seek(index * 20)
-                td_file.write(struct.pack('8s', name.upper().ljust(8)))
+                td_file.write(struct.pack('8s', name.upper().ljust(8).encode('ascii')))
                 td_file.write(struct.pack('l', -999))
                 td_file.write(struct.pack('2l', 0, 0))
 
@@ -289,7 +295,7 @@ class AIPSTask(Task):
                 td_file.write(struct.pack('i', 1))
                 td_file.write(struct.pack('i', 0))
                 td_file.write(struct.pack('f', 1.0))
-                td_file.write(struct.pack('4s', '    '))
+                td_file.write(struct.pack('4s', b'    '))
                 for adverb in params.input_list:
                     self.__write_adverb(params, td_file, adverb,
                                         input_dict[adverb])
@@ -300,14 +306,13 @@ class AIPSTask(Task):
             ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
                 + user + '000.' + user + ';'
             if not os.path.exists(ms_name):
-                ms_file = open(ms_name, mode='w')
-                ms_file.truncate(1024)
-                ms_file.close()
+                with open(ms_name, mode='w') as ms_file:
+                    ms_file.truncate(1024)
+
                 os.chmod(ms_name, 0o664)
 
-            ms_file = open(ms_name, mode='r')
-            (msgno,) = struct.unpack('i', ms_file.read(4))
-            ms_file.close()
+            with open(ms_name, mode='rb') as ms_file:
+                (msgno,) = struct.unpack('i', ms_file.read(4))
 
             path = params.version + '/' + os.environ['ARCH'] + '/LOAD/' \
                 + name.upper() + ".EXE"
@@ -322,18 +327,37 @@ class AIPSTask(Task):
         self._userno[tid] = userno
         self._msgkill[tid] = msgkill
         self._msgno[tid] = msgno
+
         return tid
 
     def __read_message(self, file, msgno):
-        file.seek((msgno / 10) * 1024 + 8 + (msgno % 10) * 100)
+        """
+        Read a message from an AIPS message file.
+
+        Returns
+        -------
+            : tuple
+            Returns (task, popsno, priority, message) tuple.
+        """
+        file.seek((msgno // 10) * 1024 + 8 + (msgno % 10) * 100)
         (tmp, task, message) = struct.unpack('i8x5s3x80s', file.read(100))
-        (popsno, priority) = (tmp / 16, tmp % 16)
-        task = task.rstrip()
-        message = message.rstrip()
+        (popsno, priority) = (tmp // 16, tmp % 16)
+        task = task.rstrip().decode()
+        message = message.rstrip().decode()
         return (task, popsno, priority, message)
 
     def messages(self, tid):
-        """Return task's messages."""
+        """Return task's messages.
+
+        Parameters
+        ----------
+        tid : int
+            Task id in pid table of process.
+
+        Returns
+        -------
+            List of messages each as a tuple (1, message)
+        """
 
         # Make sure we read the messages, even if we throw them away
         # later to prevent the task from blocking.
@@ -348,19 +372,19 @@ class AIPSTask(Task):
         user = ehex(self._userno[tid], 3, 0)
         ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
             + user + '000.' + user + ';'
-        ms_file = open(ms_name, mode='r')
 
-        (msgno,) = struct.unpack('i', ms_file.read(4))
-        while self._msgno[tid] < msgno:
-            (task, popsno, priority, msg) = \
-                self.__read_message(ms_file, self._msgno[tid])
-            # Filter
-            if popsno == self._popsno[tid]:
-                messages.append((priority, '%-5s%d: %s' % (task, popsno, msg)))
+        with open(ms_name, mode='rb') as ms_file:
+            (msgno,) = struct.unpack('i', ms_file.read(4))
+            while self._msgno[tid] < msgno:
+                (task, popsno, priority, msg) = \
+                    self.__read_message(ms_file, self._msgno[tid])
+                # Filter
+                if popsno == self._popsno[tid]:
+                    messages.append((priority, '%-5s%d: %s' %
+                                     (task, popsno, msg)))
 
-            self._msgno[tid] += 1
+                self._msgno[tid] += 1
 
-        ms_file.close()
         return messages
 
     def wait(self, tid):
@@ -422,7 +446,8 @@ class AIPSMessageLog:
         user = ehex(userno, 3, 0)
         ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
             + user + '000.' + user + ';'
-        return open(ms_name, mode='r+')
+
+        return open(ms_name, mode='r+b')
 
     def zap(self, userno):
         """Zap message log."""
