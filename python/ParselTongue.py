@@ -35,28 +35,32 @@ from AIPSData import *
 from AIPSTV import *
 from ObitTask import *
 from FITSData import *
- 
+
 # Use our own, somewhat restricted, rlcompleter.  Don't fall over if
 # readline isn't available though.
 try:
-    import atexit, readline, ptcompleter
-    if __name__ == "__main__" :
-		try:
-			path = os.environ['HOME'] + '/.ParselTongue/history'
-			readline.read_history_file(path)
-		except IOError:
-			pass
-		readline.parse_and_bind("tab: complete")
-		if not os.path.exists(os.path.dirname(path)):
-			os.makedirs(os.path.dirname(path))
-			pass
-		atexit.register(readline.write_history_file, path)
+    import atexit
+    import readline
+    import ptcompleter
+    if __name__ == "__main__":
+        try:
+            path = os.environ['HOME'] + '/.ParselTongue/history'
+            readline.read_history_file(path)
+        except IOError:
+            pass
+        readline.parse_and_bind("tab: complete")
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+            pass
+        atexit.register(readline.write_history_file, path)
 except:
     pass
 
 # Override help() such that it prints something useful for instances
 # of AIPSTask.
 _help = help
+
+
 def help(obj):
     if isinstance(obj, AIPSTask):
         obj.help()
@@ -65,28 +69,30 @@ def help(obj):
         pass
     return
 
+
 def explain(obj):
     obj.explain()
     return
 
-if __name__ == "__main__" :
-	# This is not a batch job.
-	AIPSTask.isbatch = 0
 
-	# Separate the blurb below from what the Python interpreter spits out.
-	print("")
+if __name__ == "__main__":
+    # This is not a batch job.
+    AIPSTask.isbatch = 0
 
-	print("Welcome to ParselTongue", ptversion.version)
-	while True:
-		try:
-			input = input("Please enter your AIPS user ID number: ")
-			AIPS.userno = int(input)
-		except KeyboardInterrupt:
-			print("")
-			print("AIPS user ID number is not set")
-			break
-		except:
-			print("That is not a valid AIPS user ID number")
-			continue
-		else:
-			break
+    # Separate the blurb below from what the Python interpreter spits out.
+    print("")
+
+    print("Welcome to ParselTongue", ptversion.version)
+    while True:
+        try:
+            input = input("Please enter your AIPS user ID number: ")
+            AIPS.userno = int(input)
+        except KeyboardInterrupt:
+            print("")
+            print("AIPS user ID number is not set")
+            break
+        except:
+            print("That is not a valid AIPS user ID number")
+            continue
+        else:
+            break

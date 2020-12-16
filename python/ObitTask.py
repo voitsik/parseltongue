@@ -24,13 +24,13 @@ the Task module to be able to run Obit tasks:
 
 The resulting class instance has all associated adverbs as attributes:
 
->>> print imean.ind
+>>> print(imean.ind)
 0.0
 >>> imean.ind = 1
->>> print imean.indisk
+>>> print(imean.indisk)
 1.0
 >>> imean.indi = 2.0
->>> print imean.ind
+>>> print(imean.ind)
 2.0
 
 It also knows the range for these attributes:
@@ -46,7 +46,7 @@ ValueError: value '10.0' is out of range for attribute 'indisk'
 
 >>> imean.inc = 'UVDATA'
 
->>> print imean.inclass
+>>> print(imean.inclass)
 UVDATA
 
 """
@@ -168,5 +168,5 @@ class ObitTask(AIPSTask):
 
 # Tests.
 if __name__ == '__main__':
-    import doctest, sys
+    import doctest
     doctest.testmod(sys.modules[__name__])
