@@ -46,6 +46,7 @@ class AIPSData:
         actually present in the AIPS catalogue."""
 
         assert not self.err.isErr
+        assert self.type
         cno = Obit.AIPSDirFindCNO(
             desc["disk"],
             desc["userno"],
@@ -162,14 +163,13 @@ class AIPSData:
             pass
         return result
 
-    pass  # class AIPSData
+# class AIPSData
 
 
 class AIPSImage(AIPSData):
     def __init__(self):
-        self.type = "MA"
         AIPSData.__init__(self)
-        return
+        self.type = "MA"
 
     def _init(self, desc):
         userno = OSystem.PGetAIPSuser()
@@ -179,14 +179,11 @@ class AIPSImage(AIPSData):
         OSystem.PSetAIPSuser(userno)
         return uvdata
 
-    pass
-
 
 class AIPSUVData(AIPSData):
     def __init__(self):
-        self.type = "UV"
         AIPSData.__init__(self)
-        return
+        self.type = "UV"
 
     def _init(self, desc):
         userno = OSystem.PGetAIPSuser()
@@ -207,8 +204,6 @@ class AIPSUVData(AIPSData):
     def sources(self, desc):
         uvdata = self._init(desc)
         return uvdata.sources
-
-    pass
 
 
 class AIPSCat:
