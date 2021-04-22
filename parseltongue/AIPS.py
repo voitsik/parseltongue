@@ -38,15 +38,17 @@ from . import LocalProxy
 
 
 class AIPSDisk:
-    """Class representing a (possibly remote) AIPS disk.  An instance
-    of this class stores an AIPS disk number and the URL of the
-    proxy through which it can be accessed.  For local AIPS disks
-    the URL will be None."""
+    """Class representing a (possibly remote) AIPS disk.
 
-    def __init__(self, url, disk):
+    An instance of this class stores an AIPS disk number and the URL of the
+    proxy through which it can be accessed.  For local AIPS disks
+    the URL will be None.
+    """
+
+    def __init__(self, url, disk, dirname):
         self.url = url
         self.disk = disk
-        return
+        self.dirname = dirname
 
     def proxy(self):
         """Return the proxy through which this AIPS disk can be accessed."""
@@ -67,12 +69,12 @@ proxies = [LocalProxy]
 # AIPS disk mapping.
 disks = [None]  # Disk numbers are one-based.
 
-# AIPS seems to support a maximum of 35 disks.
-for disk in range(1, 36):
+# AIPS seems to support a maximum of 71 disks.
+for disk in range(1, 72):
     area = "DA" + ehex(disk, 2, "0")
     if area not in os.environ:
         break
-    disks.append(AIPSDisk(None, disk))
+    disks.append(AIPSDisk(None, disk, os.getenv(area)))
 
 # Message log.
 log = None

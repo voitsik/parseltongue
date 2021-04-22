@@ -231,16 +231,17 @@ class AIPSCat:
         for cno in range(1, num_slots):
             entry = AIPSDir.PInfo(disk, userno, cno, self.err)
             if entry:
-                dict = {}
-                dict["cno"] = cno
-                dict["name"] = entry[0:12].strip()
-                dict["klass"] = entry[13:19].strip()
-                dict["seq"] = int(entry[20:25])
-                dict["type"] = entry[26:28]
-                dict["date"] = entry[29:40]
-                dict["time"] = entry[41:49]
-                catalog.append(dict)
-                pass
-            continue
+                entry_dict = {
+                    "cno": cno,
+                    "name": entry[0:12].strip(),
+                    "klass": entry[13:19].strip(),
+                    "seq": int(entry[20:25]),
+                    "type": entry[26:28],
+                    "date": entry[29:40],
+                    "time": entry[41:49],
+                }
+                catalog.append(entry_dict)
+
         OSystem.PSetAIPSuser(_userno)
+
         return catalog

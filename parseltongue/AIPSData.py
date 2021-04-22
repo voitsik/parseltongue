@@ -580,8 +580,6 @@ class AIPSCat:
                     AIPSUVData(entry["name"], entry["klass"], disk, entry["seq"]).zap(
                         force
                     )
-                continue
-            continue
 
 
 # class AIPSCat
