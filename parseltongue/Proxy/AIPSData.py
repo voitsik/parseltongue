@@ -36,7 +36,10 @@ from ..Wizardry.AIPSData import AIPSImage as WAIPSImage
 class AIPSData:
     def __init__(self):
         self.err = OErr.OErr()
-        return
+        self.type = None  # Specified in subclasses
+
+    def _init(self, desc):
+        raise NotImplementedError("AIPSData: _init implemented in subclasses")
 
     def exists(self, desc):
         """Checks that this instance of AIPSData refers to a dataset that is
@@ -211,7 +214,6 @@ class AIPSUVData(AIPSData):
 class AIPSCat:
     def __init__(self):
         self.err = OErr.OErr()
-        return
 
     def cat(self, disk, userno):
         from obit import AIPSDir
@@ -221,8 +223,8 @@ class AIPSCat:
 
         try:
             num_slots = AIPSDir.PNumber(disk, userno, self.err)
-        except OErr.OErr as err:
-            OErr.PClear(err)
+        except Exception:
+            OErr.PClear(self.err)
             return []
 
         catalog = []
@@ -242,5 +244,3 @@ class AIPSCat:
             continue
         OSystem.PSetAIPSuser(_userno)
         return catalog
-
-    pass
