@@ -35,7 +35,7 @@ False
 >>> uvdata.exists()
 False
 
->>> print(uvdata)
+>>> print uvdata
 AIPSUVData('NONAME', 'UVDATA', 1, 1)
 
 Checking whether two instance refer to the same data is fairly simple:

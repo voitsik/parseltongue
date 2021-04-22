@@ -22,13 +22,13 @@
 #
 # The resulting class instance has all associated adverbs as attributes:
 #
-# >>> print(imean.ind)
+# >>> print imean.ind
 # 0.0
 # >>> imean.ind = 1
-# >>> print(imean.indisk)
+# >>> print imean.indisk
 # 1.0
 # >>> imean.indi = 2.0
-# >>> print(imean.ind)
+# >>> print imean.ind
 # 2.0
 #
 # It also knows the range for these attributes:
@@ -44,15 +44,15 @@
 #
 # >>> imean.inc = 'UVDATA'
 #
-# >>> print(imean.inclass)
+# >>> print imean.inclass
 # UVDATA
 #
 # >>> imean.blc[1:] = [128, 128]
-# >>> print(imean.blc)
+# >>> print imean.blc
 # [None, 128.0, 128.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 #
 # >>> imean.blc = AIPSList([256, 256])
-# >>> print(imean.blc)
+# >>> print imean.blc
 # [None, 256.0, 256.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 #
 # It doesn't hurt to apply AIPSList to a scalar:
@@ -72,10 +72,10 @@
 # The AIPSTask class implements the copy method:
 #
 # >>> imean2 = imean.copy()
-# >>> print(imean2.inclass)
+# >>> print imean2.inclass
 # UVDATA
 # >>> imean2.inclass = 'SPLIT'
-# >>> print(imean.inclass)
+# >>> print imean.inclass
 # UVDATA
 #
 # It also implements the == operator, which checks whether task name and

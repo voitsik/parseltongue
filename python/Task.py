@@ -36,10 +36,10 @@ attributes:
 
 It still has the property that attribute names can be abbreviated:
 
->>> print(my_task.ind)
+>>> print my_task.ind
 0
 >>> my_task.ind = 1
->>> print(my_task.ind)
+>>> print my_task.ind
 1
 
 But an exception will be thrown if you try to assign a value that is
@@ -73,31 +73,31 @@ Assigning an integer value to a floating point attribute is perfectly
 fine of course:
 
 >>> my_task.pixavg = 2
->>> print(my_task.pixavg)
+>>> print my_task.pixavg
 2.0
 
 The same should happen for lists:
 
 >>> my_task.aparms = 10*[1]
->>> print(my_task.aparms)
+>>> print my_task.aparms
 [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 For subscripting:
 
 >>> my_task.aparms[0] = 0
->>> print(my_task.aparms)
+>>> print my_task.aparms
 [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 And slice assignment:
 
 >>> my_task.aparms[1:3] = [1, 2]
->>> print(my_task.aparms)
+>>> print my_task.aparms
 [0.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 You're not allowed to change the length of the list through slice
 assignment though:
 
->>> my_task.aparms[3:6] = [3, 4, 5, 6]  #doctest: +IGNORE_EXCEPTION_DETAIL
+>>> my_task.aparms[3:6] = [3, 4, 5, 6]
 Traceback (most recent call last):
   ...
 TypeError: slice '3:6' changes the array size of attribute 'aparms'
