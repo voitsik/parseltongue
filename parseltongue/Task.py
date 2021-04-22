@@ -118,7 +118,7 @@ import copy
 import pydoc
 import sys
 
-from MinimalMatch import MinimalMatch
+from .MinimalMatch import MinimalMatch
 
 
 class List(list):
@@ -143,10 +143,12 @@ class List(list):
 
     def __setslice__(self, low, high, seq):
         high = min(high, len(self))
-        if len(seq) > high - low or \
-                (len(seq) < high - low and high < len(self)):
-            msg = "slice '%d:%d' changes the array size of" \
-                  " attribute '%s'" % (low, high, self._attr)
+        if len(seq) > high - low or (len(seq) < high - low and high < len(self)):
+            msg = "slice '%d:%d' changes the array size of" " attribute '%s'" % (
+                low,
+                high,
+                self._attr,
+            )
             raise TypeError(msg)
         for key in range(low, high):
             if key - low < len(seq):
@@ -162,12 +164,11 @@ class Task(MinimalMatch):
         self._min_dict = {}
         self._max_dict = {}
         self._strlen_dict = {}
-        self._help_string = ''
+        self._help_string = ""
         return
 
     def help(self):
         """Display help for this task."""
-
         if self._help_string:
             pydoc.pager(self._help_string)
 
@@ -175,7 +176,7 @@ class Task(MinimalMatch):
         """Check whether VALUE is a valid valid for attribute ATTR."""
 
         # Do not check private attributes.
-        if attr.startswith('_'):
+        if attr.startswith("_"):
             return value
 
         # Short circuit.
@@ -185,8 +186,7 @@ class Task(MinimalMatch):
         # Handle lists recursively.
         if isinstance(value, list) and isinstance(default, list):
             if len(value) > len(default):
-                msg = "array '%s' is too big for attribute '%s'" \
-                      % (value, attr)
+                msg = "array '%s' is too big for attribute '%s'" % (value, attr)
                 raise TypeError(msg)
             validated_value = List(self, attr, default)
             for key in range(len(value)):
@@ -199,30 +199,26 @@ class Task(MinimalMatch):
 
         # Check attribute type.
         if not isinstance(value, type(default)):
-            msg = "value '%s' has invalid type for attribute '%s'" \
-                  % (value, attr)
+            msg = "value '%s' has invalid type for attribute '%s'" % (value, attr)
             raise TypeError(msg)
 
         # Check range.
         if attr in self._min_dict:
             min = self._min_dict[attr]
             if not min <= value:
-                msg = "value '%s' is out of range for attribute '%s'" \
-                      % (value, attr)
+                msg = "value '%s' is out of range for attribute '%s'" % (value, attr)
                 raise ValueError(msg)
 
         if attr in self._max_dict:
             max = self._max_dict[attr]
             if not value <= max:
-                msg = "value '%s' is out of range for attribute '%s'" \
-                      % (value, attr)
+                msg = "value '%s' is out of range for attribute '%s'" % (value, attr)
                 raise ValueError(msg)
 
         # Check string length.
         if attr in self._strlen_dict:
             if len(value) > self._strlen_dict[attr]:
-                msg = "string '%s' is too long for attribute '%s'" \
-                      % (value, attr)
+                msg = "string '%s' is too long for attribute '%s'" % (value, attr)
                 raise ValueError(msg)
 
         return value
@@ -239,7 +235,8 @@ class Task(MinimalMatch):
 
 
 # Tests.
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
+
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])

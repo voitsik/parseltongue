@@ -22,17 +22,15 @@ AIPSUVData objects.
 """
 
 # Bits from Obit.
-import Obit
-import OErr
-import OSystem
-import AIPSDir
-import Image
-import UV
-import TableList
+from obit import Obit, OErr, OSystem
+
+# import Image
+# import UV
+# import TableList
 
 # Wizardry bits.
-from Wizardry.AIPSData import AIPSUVData as WAIPSUVData
-from Wizardry.AIPSData import AIPSImage as WAIPSImage
+from ..Wizardry.AIPSData import AIPSUVData as WAIPSUVData
+from ..Wizardry.AIPSData import AIPSImage as WAIPSImage
 
 
 class AIPSData:
@@ -44,10 +42,16 @@ class AIPSData:
         """Checks that this instance of AIPSData refers to a dataset that is
         actually present in the AIPS catalogue."""
 
-        assert(not self.err.isErr)
-        cno = Obit.AIPSDirFindCNO(desc['disk'], desc['userno'], desc['name'],
-                                  desc['klass'], self.type, desc['seq'],
-                                  self.err.me)
+        assert not self.err.isErr
+        cno = Obit.AIPSDirFindCNO(
+            desc["disk"],
+            desc["userno"],
+            desc["name"],
+            desc["klass"],
+            self.type,
+            desc["seq"],
+            self.err.me,
+        )
         if cno == -1:
             OErr.PClear(self.err)
             return False
@@ -55,10 +59,10 @@ class AIPSData:
 
     def verify(self, desc):
         data = self._init(desc)
-        return True                # Return something other than None.
+        return True  # Return something other than None.
 
     def header(self, desc):
-        """Returns the data header."""
+        """Return the data header."""
         data = self._init(desc)
         return data.header._generate_dict()
 
@@ -79,25 +83,25 @@ class AIPSData:
         return data.tables
 
     def table_highver(self, desc, type):
-        """Returns the highest version number of the specified table type."""
+        """Return the highest version number of the specified table type."""
         data = self._init(desc)
         return data.table_highver(type)
 
     def rename(self, desc, name, klass, seq):
-        """Renames the data set."""
+        """Rename the data set."""
         data = self._init(desc)
         return data.rename(name, klass, seq)
 
     def zap(self, desc, force):
-        """Removes the data set from the AIPS catalogue."""
+        """Remove the data set from the AIPS catalogue."""
         self._init(desc).zap(force)
-        return True                # Return something other than None.
+        return True  # Return something other than None.
 
     def clrstat(self, desc):
-        """Unsets the 'busy' state in the AIPS catalogue. Useful should an
-                AIPS task die mid-step."""
+        """Unset the 'busy' state in the AIPS catalogue. Useful should an
+        AIPS task die mid-step."""
         self._init(desc).clrstat()
-        return True                # Return something other than None.
+        return True  # Return something other than None.
 
     def keywords_table(self, desc, type, version):
         data = self._init(desc)
@@ -143,7 +147,7 @@ class AIPSData:
         """Remove the specified version of the indicated table type."""
         data = self._init(desc)
         data.zap_table(type, version)
-        return True                # Return something other than None.
+        return True  # Return something other than None.
 
     def _getitem_history(self, desc, key):
         data = self._init(desc)
@@ -155,19 +159,20 @@ class AIPSData:
             pass
         return result
 
-    pass                           # class AIPSData
+    pass  # class AIPSData
 
 
 class AIPSImage(AIPSData):
     def __init__(self):
-        self.type = 'MA'
+        self.type = "MA"
         AIPSData.__init__(self)
         return
 
     def _init(self, desc):
         userno = OSystem.PGetAIPSuser()
-        uvdata = WAIPSImage(desc['name'], desc['klass'], desc['disk'],
-                            desc['seq'], desc['userno'])
+        uvdata = WAIPSImage(
+            desc["name"], desc["klass"], desc["disk"], desc["seq"], desc["userno"]
+        )
         OSystem.PSetAIPSuser(userno)
         return uvdata
 
@@ -176,14 +181,15 @@ class AIPSImage(AIPSData):
 
 class AIPSUVData(AIPSData):
     def __init__(self):
-        self.type = 'UV'
+        self.type = "UV"
         AIPSData.__init__(self)
         return
 
     def _init(self, desc):
         userno = OSystem.PGetAIPSuser()
-        uvdata = WAIPSUVData(desc['name'], desc['klass'], desc['disk'],
-                             desc['seq'], desc['userno'])
+        uvdata = WAIPSUVData(
+            desc["name"], desc["klass"], desc["disk"], desc["seq"], desc["userno"]
+        )
         OSystem.PSetAIPSuser(userno)
         return uvdata
 
@@ -208,6 +214,8 @@ class AIPSCat:
         return
 
     def cat(self, disk, userno):
+        from obit import AIPSDir
+
         _userno = OSystem.PGetAIPSuser()
         OSystem.PSetAIPSuser(userno)
 
@@ -222,13 +230,13 @@ class AIPSCat:
             entry = AIPSDir.PInfo(disk, userno, cno, self.err)
             if entry:
                 dict = {}
-                dict['cno'] = cno
-                dict['name'] = entry[0:12].strip()
-                dict['klass'] = entry[13:19].strip()
-                dict['seq'] = int(entry[20:25])
-                dict['type'] = entry[26:28]
-                dict['date'] = entry[29:40]
-                dict['time'] = entry[41:49]
+                dict["cno"] = cno
+                dict["name"] = entry[0:12].strip()
+                dict["klass"] = entry[13:19].strip()
+                dict["seq"] = int(entry[20:25])
+                dict["type"] = entry[26:28]
+                dict["date"] = entry[29:40]
+                dict["time"] = entry[41:49]
                 catalog.append(dict)
                 pass
             continue

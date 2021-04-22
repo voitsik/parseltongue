@@ -37,9 +37,8 @@ class Task:
         """Start the task.
 
         There appears to be two calls, the first in this something undocumented
-        is done to the terminal and the sceond to actually start the function
+        is done to the terminal and the sceond to actually start the function.
         """
-
         (pid, tid) = pty.fork()
         if pid == 0:
             try:
@@ -72,14 +71,13 @@ class Task:
         -------
             List of messages.
         """
-
         (iwtd, owtd, ewtd) = select.select([tid], [], [], 0.25)
         if tid in iwtd:
             try:
                 messages = os.read(tid, 2048).decode()
 
                 if len(messages) > 0:
-                    messages = messages.split('\r\n')
+                    messages = messages.split("\r\n")
                     return [msg for msg in messages if msg]
             except OSError:
                 # If reading failed, it's (probably) because the child
@@ -104,12 +102,10 @@ class Task:
         bananna : str
             Message to pass to task input.
         """
-
         os.write(tid, banana.encode())
 
     def wait(self, tid):
         """Wait for the task to finish."""
-
         assert self.finished(tid)
 
         del self._pid[tid]
@@ -117,7 +113,6 @@ class Task:
 
     def abort(self, tid, sig=signal.SIGINT):
         """Abort a task."""
-
         os.kill(self._pid[tid], sig)
 
         del self._pid[tid]

@@ -28,17 +28,17 @@ import signal
 import struct
 
 # Global AIPS defaults.
-from AIPSUtil import ehex
-from Proxy.AIPS import AIPS
+from ..AIPSUtil import ehex
+from .AIPS import AIPS
 
 # The results from parsing POPSDAT.HLP.
-from Proxy.Popsdat import Popsdat
+from .Popsdat import Popsdat
 
 # Bits from the generic Task implementation.
-from Proxy.Task import Task
+from .Task import Task
 
 # AIPS Lite
-import AIPSLite
+from .. import AIPSLite
 
 
 class _AIPSTaskParams:

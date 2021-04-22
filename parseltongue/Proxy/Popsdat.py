@@ -39,22 +39,22 @@ class Popsdat:
 
         for line in input:
             # A line of dashes starts the parameter definitions.
-            if line.startswith('--------'):
+            if line.startswith("--------"):
                 break
             continue
 
         for line in input:
             # Comment lines start with ';' or 'C-'.
-            if line.startswith(';') or line.startswith('C-'):
+            if line.startswith(";") or line.startswith("C-"):
                 continue
 
             split_line = line.split()
             name = split_line[0].lower()
             type = int(split_line[2])
 
-            if type == 1:               # Float
+            if type == 1:  # Float
                 self.default_dict[name] = float(split_line[3])
-            elif type == 2:             # Array of floats.
+            elif type == 2:  # Array of floats.
                 if name in self.default_dict:
                     value = [self.default_dict[name]]
                 else:
@@ -62,39 +62,36 @@ class Popsdat:
                     pass
 
                 dimensions = int(split_line[3])
-                if dimensions == 1:     # Vector of floats.
+                if dimensions == 1:  # Vector of floats.
                     length = int(float(split_line[4]))
                     self.default_dict[name] = [None] + length * value
-                elif dimensions == 2:   # Matrix of floats.
+                elif dimensions == 2:  # Matrix of floats.
                     dimy = int(float(split_line[4]))
                     dimx = int(float(split_line[5]))
-                    self.default_dict[name] = [None] \
-                        + dimx * [[None] + dimy * value]
+                    self.default_dict[name] = [None] + dimx * [[None] + dimy * value]
                 else:
-                    msg = "Cannot handle float arrays of dimension %d" \
-                          % dimensions
+                    msg = "Cannot handle float arrays of dimension %d" % dimensions
                     raise AssertionError(msg)
-            elif type == 4:             # Verb
+            elif type == 4:  # Verb
                 self.verb_dict[name] = int(split_line[2])
-            elif type == 6:             # End of adverbs.
+            elif type == 6:  # End of adverbs.
                 break
-            elif type == 7:             # Array of characters.
+            elif type == 7:  # Array of characters.
                 if name in self.default_dict:
                     value = self.default_dict[name]
                 else:
-                    value = ''
+                    value = ""
                     pass
 
                 dimensions = int(split_line[3])
                 self.strlen_dict[name] = int(float(split_line[4]))
-                if dimensions == 1:     # String
+                if dimensions == 1:  # String
                     self.default_dict[name] = value
-                elif dimensions == 2:   # Vector of strings.
+                elif dimensions == 2:  # Vector of strings.
                     length = int(float(split_line[5]))
                     self.default_dict[name] = [None] + length * [value]
                 else:
-                    msg = "Cannot handle character arrays of dimension %d" \
-                          % dimension
+                    msg = "Cannot handle character arrays of dimension %d" % dimensions
                     raise AssertionError(msg)
             else:
                 continue
@@ -102,43 +99,43 @@ class Popsdat:
         for line in input:
             # Older AIPS versions have some essential additional
             # adverbs that are defined in PROC DEFADV.
-            if line.startswith('PROC DEFADV'):
+            if line.startswith("PROC DEFADV"):
                 break
             continue
 
         for line in input:
             # The end of a PROC is marked by FINISH.
-            if line.startswith('FINISH'):
+            if line.startswith("FINISH"):
                 break
 
             split_line = line.split()
             type = split_line[0]
 
-            if type == 'ARRAY':
+            if type == "ARRAY":
                 for array in split_line[1:]:
-                    lparen = array.find('(')
-                    rparen = array.find(')')
+                    lparen = array.find("(")
+                    rparen = array.find(")")
                     if lparen == -1 or rparen == -1:
                         continue
                     name = array[:lparen].lower()
-                    dim = array[lparen + 1:rparen]
-                    dim = dim.split(',')
+                    dim = array[lparen + 1 : rparen]
+                    dim = dim.split(",")
                     if len(dim) == 1:
                         length = int(dim[0])
                         self.default_dict[name] = [None] + length * [0.0]
                     elif len(dim) == 2:
                         dimx = int(dim[0])
                         dimy = int(dim[1])
-                        self.default_dict[name] = [None] \
-                            + dimx * [[None]
-                                      + dimy * [0.0]]
+                        self.default_dict[name] = [None] + dimx * [
+                            [None] + dimy * [0.0]
+                        ]
                     else:
                         continue
                     continue
                 pass
-            elif type == 'SCALAR':
+            elif type == "SCALAR":
                 for scalar in split_line[1:]:
-                    name = scalar.rstrip(',').lower()
+                    name = scalar.rstrip(",").lower()
                     if name:
                         self.default_dict[name] = 0.0
                         pass
@@ -148,33 +145,32 @@ class Popsdat:
 
     def __parse_statements(self):
         """Parse statements in POPSDAT.HLP."""
-
         input = open(self.path)
 
         for line in input:
             # Statements follow the adverbs.
-            if line.startswith('QUITPOPS'):
+            if line.startswith("QUITPOPS"):
                 break
             continue
 
         for line in input:
-            if line.startswith('*'):
+            if line.startswith("*"):
                 break
             continue
 
         for line in input:
-            if line.startswith('*'):
+            if line.startswith("*"):
                 break
 
             # If we have multiple statements on a line, split them.
-            split_line = line.strip().split(';')
+            split_line = line.strip().split(";")
             for statement in split_line:
                 if not statement:
                     continue
 
                 # Parse statement.  This really only parses
                 # assignments, but that's all we care about (for now).
-                words = statement.strip().split('=')
+                words = statement.strip().split("=")
                 name = words[0].strip().lower()
                 value = words[1].strip()
                 if value.startswith("'"):
@@ -194,9 +190,9 @@ class Popsdat:
         self.verb_dict = {}
 
         self.version = version
-        self.path = self.version + '/HELP/POPSDAT.HLP'
+        self.path = self.version + "/HELP/POPSDAT.HLP"
         if not os.path.exists(self.path):
-            self.version = os.environ['AIPS_VERSION']
-            self.path = self.version + '/HELP/POPSDAT.HLP'
+            self.version = os.environ["AIPS_VERSION"]
+            self.path = self.version + "/HELP/POPSDAT.HLP"
 
         self.__parse()

@@ -17,7 +17,7 @@
 
 """
 
-This module provides the FITSDisk and FITS classes.  
+This module provides the FITSDisk and FITS classes.
 
 """
 
@@ -25,24 +25,25 @@ This module provides the FITSDisk and FITS classes.
 import os
 
 # Available proxies.
-import LocalProxy
+from . import LocalProxy
 from xmlrpc.client import ServerProxy
 
 
 class FITSDisk:
-    
-    """Class representing a (possibly remote) FITS disk.  An instance
-       of this class stores an FITS disk number and the URL of the
-       proxy through which it can be accessed.  For local FITS disks
-       the URL will be None."""
+    """Class representing a (possibly remote) FITS disk.
+
+    An instance
+    of this class stores an FITS disk number and the URL of the
+    proxy through which it can be accessed.  For local FITS disks
+    the URL will be None.
+    """
 
     def __init__(self, url, disk):
         self.url = url
         self.disk = disk
 
     def proxy(self):
-        """Return the proxy through which this FITS disk can be
-           accessed."""
+        """Return the proxy through which this FITS disk can be accessed."""
         if self.url:
             return ServerProxy(self.url)
         else:
@@ -50,27 +51,27 @@ class FITSDisk:
 
 
 class FITS:
-    
     """Container for several FITS-related default values.
+
     Uses environment variables: FITS, FITS01, FITS02...
     """
 
     # List of available proxies.
-    proxies = [ LocalProxy ]
+    proxies = [LocalProxy]
 
-    # FITS disk mapping. 
-    disks = [ None ]                    # Disk numbers are one-based.
+    # FITS disk mapping.
+    disks = [None]  # Disk numbers are one-based.
 
     # Look for FITS
-    area = 'FITS'
+    area = "FITS"
     if area in os.environ:
         disks.append(FITSDisk(None, 1))
 
     # FITS01, FITS02...
-    # Who will ever need more than 19 FITS disks?    
+    # Who will ever need more than 19 FITS disks?
     for disk in range(2, 20):
-        area = 'FITS%02d' % (disk-1)
-        if not area in os.environ:
+        area = "FITS%02d" % (disk - 1)
+        if area not in os.environ:
             break
         disks.append(FITSDisk(None, disk))
         continue

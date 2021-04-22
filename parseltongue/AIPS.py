@@ -27,22 +27,21 @@ import os
 import sys
 
 # Generic AIPS functionality.
-from AIPSUtil import ehex
+from .AIPSUtil import ehex
 
 # Debug log.  Define before including proxies.
 debuglog = None
 
 # Available proxies.
 from xmlrpc.client import ServerProxy
-import LocalProxy
+from . import LocalProxy
 
 
 class AIPSDisk:
-
     """Class representing a (possibly remote) AIPS disk.  An instance
-       of this class stores an AIPS disk number and the URL of the
-       proxy through which it can be accessed.  For local AIPS disks
-       the URL will be None."""
+    of this class stores an AIPS disk number and the URL of the
+    proxy through which it can be accessed.  For local AIPS disks
+    the URL will be None."""
 
     def __init__(self, url, disk):
         self.url = url
@@ -50,11 +49,11 @@ class AIPSDisk:
         return
 
     def proxy(self):
-        """Return the proxy through which this AIPS disk can be
-           accessed."""
+        """Return the proxy through which this AIPS disk can be accessed."""
         if self.url:
             return ServerProxy(self.url, allow_none=True)
         return LocalProxy
+
 
 # class AIPSDisk
 
@@ -66,11 +65,11 @@ userno = 0
 proxies = [LocalProxy]
 
 # AIPS disk mapping.
-disks = [None]                        # Disk numbers are one-based.
+disks = [None]  # Disk numbers are one-based.
 
 # AIPS seems to support a maximum of 35 disks.
 for disk in range(1, 36):
-    area = 'DA' + ehex(disk, 2, '0')
+    area = "DA" + ehex(disk, 2, "0")
     if area not in os.environ:
         break
     disks.append(AIPSDisk(None, disk))
@@ -82,8 +81,8 @@ log = None
 # The code below is the result of a serious design flaw.  It should
 # really die, but removing it will probably affect most scripts.
 
-class _AIPS():
 
+class _AIPS:
     """Backwards compatibility gunk."""
 
     def _get_userno(self):
@@ -91,6 +90,7 @@ class _AIPS():
 
     def _set_userno(self, value):
         sys.modules[__name__].userno = value
+
     userno = property(_get_userno, _set_userno)
 
     def _get_disks(self):
@@ -98,6 +98,7 @@ class _AIPS():
 
     def _set_disks(self, value):
         sys.modules[__name__].disks = value
+
     disks = property(_get_disks, _set_disks)
 
     def _get_log(self):
@@ -105,6 +106,7 @@ class _AIPS():
 
     def _set_log(self, value):
         sys.modules[__name__].log = value
+
     log = property(_get_log, _set_log)
 
     def _get_debuglog(self):
@@ -112,7 +114,9 @@ class _AIPS():
 
     def _set_debuglog(self, value):
         sys.modules[__name__].debuglog = value
+
     debuglog = property(_get_debuglog, _set_debuglog)
+
 
 # class _AIPS
 

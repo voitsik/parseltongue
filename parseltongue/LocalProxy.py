@@ -21,32 +21,37 @@ without doing any RPC.
 
 """
 
+import sys
+
 # Global AIPS defaults.
-import AIPS
+from . import AIPS
 
 # The AIPSTask module should always be available.
-import Proxy.AIPSTask
-AIPSTask = Proxy.AIPSTask.AIPSTask()
-AIPSMessageLog = Proxy.AIPSTask.AIPSMessageLog()
+from .Proxy import AIPSTask as ProxyAIPSTask
+
+AIPSTask = ProxyAIPSTask.AIPSTask()
+AIPSMessageLog = ProxyAIPSTask.AIPSMessageLog()
 
 # The same goes for the ObitTask module.
-import Proxy.ObitTask
-ObitTask = Proxy.ObitTask.ObitTask()
+from .Proxy import ObitTask as ProxyObitTask
+
+ObitTask = ProxyObitTask.ObitTask()
 
 # The AIPSData module depends on Obit.  Since Obit might not be
 # available, leave out the AIPSUVData and AIPSImage instances if we
 # fail to load the module.
+
 try:
-    import Proxy.AIPSData
+    from .Proxy import AIPSData as ProxyAIPSData
 except Exception as exception:
     if AIPS.debuglog:
         print(exception, file=AIPS.debuglog)
     else:
         # Print an empty line to make sure the message stands out.
         print()
-        print("Warning: can't import AIPSData;", end=' ')
+        print("Warning: can't import AIPSData;", end=" ")
         print("access to local AIPS data won't work: " + str(exception))
 else:
-    AIPSImage = Proxy.AIPSData.AIPSImage()
-    AIPSUVData = Proxy.AIPSData.AIPSUVData()
-    AIPSCat = Proxy.AIPSData.AIPSCat()
+    AIPSImage = ProxyAIPSData.AIPSImage()
+    AIPSUVData = ProxyAIPSData.AIPSUVData()
+    AIPSCat = ProxyAIPSData.AIPSCat()

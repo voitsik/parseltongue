@@ -21,7 +21,7 @@
 #                         National Radio Astronomy Observatory
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 #
 #                   Obit tasking interface
 #
@@ -34,23 +34,30 @@
 #  addition of:
 #   - A line before the beginning of each parameter definition of the form:
 #   **PARAM** [type] [dim]
-#       where [type] is float or str (string) and [dim] is the 
+#       where [type] is float or str (string) and [dim] is the
 #       dimensionality as a blank separated list of integers, e.g.
 #       **PARAM** str 12 5       (5 strings of 12 characters)
 #   HINT: No matter what POPS thinks, all strings are multiples of 4 characters
 #   For non AIPS usage dbl (double), int (integer=long), boo (boolean)
 #   are defined.
 #
-#-----------------------------------------------------------------------
-
-# Bits from AIPS.
-from AIPSUtil import ehex
-
-# Bits from the generic Task implementation.
-from Proxy.Task import Task
+# -----------------------------------------------------------------------
 
 # Generic Python stuff.
-import fcntl, glob, os, pickle, select, struct, string, pty
+# import fcntl
+import glob
+import os
+import pickle
+# import pty
+# import select
+import string
+# import struct
+
+# Bits from AIPS.
+from ..AIPSUtil import ehex
+
+# Bits from the generic Task implementation.
+from .Task import Task
 
 
 class _ObitTaskParams:
@@ -65,27 +72,27 @@ class _ObitTaskParams:
         min = None
         max = None
 
-	#print "DEBUG in ObitTaskParams"
+        # print("DEBUG in ObitTaskParams")
 
-        path = os.environ['OBIT'] + '/TDF/' + name + '.TDF'
+        path = os.environ["OBIT"] + "/TDF/" + name + ".TDF"
         input = open(path)
         for line in input:
             # DEBUG
-            #print line
+            # print(line)
             # A line of dashes terminates the parameter definitions.
-            if line.startswith('--------'):
-                break;
+            if line.startswith("--------"):
+                break
 
             # Comment lines start with ';'.
-            if line.startswith(';'):
+            if line.startswith(";"):
                 continue
 
             if not task:
                 task = line.split()[0]
-                min_start = line.find('LLLLLLLLLLLL')
-                min_end = line.rfind('L')
-                max_start = line.find('UUUUUUUUUUUU')
-                max_end = line.rfind('U')
+                min_start = line.find("LLLLLLLLLLLL")
+                min_end = line.rfind("L")
+                max_start = line.find("UUUUUUUUUUUU")
+                max_end = line.rfind("U")
                 dir_start = min_start - 2
                 dir_end = min_start - 1
                 continue
@@ -93,50 +100,50 @@ class _ObitTaskParams:
             if line.startswith(task):
                 continue
 
-            if line.startswith(' ') or line.startswith('\n'):
+            if line.startswith(" ") or line.startswith("\n"):
                 continue
 
             # Description of parameter?
-            if line.startswith('**PARAM**'):
+            if line.startswith("**PARAM**"):
                 gotDesc = True
                 # Get type and dimension.
                 parts = line.split()
-                 # Dimensionality.
+                # Dimensionality.
                 dim = []
                 total = 1
                 for x in parts[2:]:
                     total *= int(x)
-                    dim.append(int(x));
+                    dim.append(int(x))
                 # Want number of strings, not number of characters.
-                if parts[1] == 'str':
+                if parts[1] == "str":
                     total = total / dim[0]
                 # Type.
                 type = parts[1]
-                if type == 'float':
+                if type == "float":
                     type = float
                     strlen = None
                     deff = total * [0.0]
-                elif type == 'str':
+                elif type == "str":
                     type = str
                     strlen = dim[0]
-                    deff = total * [strlen * ' ']
-                elif type == 'int':
+                    deff = total * [strlen * " "]
+                elif type == "int":
                     type = int
                     strlen = None
                     deff = total * [0]
-                elif type == 'boo':
+                elif type == "boo":
                     type = bool
                     strlen = None
                     deff = total * [False]
-                # print "DEBUG line",line,type,dim
+                # print("DEBUG line", line, type, dim)
 
             # If just parsed PARAM line get parameter.
             elif gotDesc:
                 gotDesc = False
                 adverb = line.split()[0]
-                code = line[min_start - 1:min_start]
+                code = line[min_start - 1 : min_start]
                 if not code:
-                    code = ' '
+                    code = " "
                 try:
                     min = float(line[min_start:min_end].strip())
                     max = float(line[max_start:max_end].strip())
@@ -148,25 +155,25 @@ class _ObitTaskParams:
                 # If only one entry, convert deff to scalar.
                 if len(deff) == 1:
                     deff = deff[0]
-                self.default_dict[adverb] = deff # default
-                self.dim_dict[adverb] = dim # dimensionality
-                if code in ' *&$' or len(adverb) > 9:
+                self.default_dict[adverb] = deff  # default
+                self.dim_dict[adverb] = dim  # dimensionality
+                if code in " *&$" or len(adverb) > 9:
                     self.input_list.append(adverb)
-                if code in '&%$@':
+                if code in "&%$@":
                     self.output_list.append(adverb)
                 if strlen:
                     self.strlen_dict[adverb] = strlen
-                if min != None:
+                if min is not None:
                     self.min_dict[adverb] = min
-                if max != None:
+                if max is not None:
                     self.max_dict[adverb] = max
-                #print "DEBUG adverb", adverb, deff, dim
+                # print("DEBUG adverb", adverb, deff, dim)
 
         # Parse HELP section.
         for line in input:
             # A line of dashes terminates the help message.
-            if line.startswith('--------'):
-                break;
+            if line.startswith("--------"):
+                break
 
             self.help_string = self.help_string + line
 
@@ -177,17 +184,23 @@ class _ObitTaskParams:
         self.min_dict = {}
         self.max_dict = {}
         self.strlen_dict = {}
-        self.help_string = ''
+        self.help_string = ""
         self.dim_dict = {}
 
         self.name = name
-        if version in ['OLD', 'NEW', 'TST']:
+        if version in ["OLD", "NEW", "TST"]:
             self.version = os.path.basename(os.environ[version])
         else:
             self.version = version
 
-        path = os.environ['HOME'] + '/.ParselTongue/' \
-               + self.version + '/' + name + '.pickle'
+        path = (
+            os.environ["HOME"]
+            + "/.ParselTongue/"
+            + self.version
+            + "/"
+            + name
+            + ".pickle"
+        )
 
         try:
             unpickler = pickle.Unpickler(open(path))
@@ -206,7 +219,7 @@ class _ObitTaskParams:
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
 
-            pickler = pickle.Pickler(open(path, mode='w'))
+            pickler = pickle.Pickler(open(path, mode="w"))
             pickler.dump(self.default_dict)
             pickler.dump(self.input_list)
             pickler.dump(self.output_list)
@@ -234,8 +247,7 @@ class ObitTask(Task):
 
     def __write_adverb(self, params, file, adverb, value):
         """Write Obit input text file."""
-
-        assert(adverb in params.input_list)
+        assert adverb in params.input_list
 
         # Get type, may be scalar or list
         dtype = type(value)
@@ -248,93 +260,92 @@ class ObitTask(Task):
         else:
             data = str(value)
 
-        dim = params.dim_dict[adverb]   # Dimensionality array
+        dim = params.dim_dict[adverb]  # Dimensionality array
         dimStr = "(" + str(dim[0]) + ")"
-        if (len(dim) > 1):
-            if (dim[1] > 1):
+        if len(dim) > 1:
+            if dim[1] > 1:
                 dimStr = "(" + str(dim[0]) + "," + str(dim[1]) + ")"
 
         if dtype == float:
             file.write("$Key = " + adverb + " Flt " + dimStr + "\n")
-            file.write(data + "\n")     # Write data to file
+            file.write(data + "\n")  # Write data to file
         elif dtype == str:
             file.write("$Key = " + adverb + " Str " + dimStr + "\n")
             if type(value) == list:
                 for x in value:
-                    file.write(x + "\n") # Write data to file
+                    file.write(x + "\n")  # Write data to file
             else:
-                #print "DEBUG write_adverb", adverb, dtype, dim, value
-                file.write(value + "\n") # Write data to file
+                # print("DEBUG write_adverb", adverb, dtype, dim, value)
+                file.write(value + "\n")  # Write data to file
         elif dtype == bool:
             file.write("$Key = " + adverb + " Boo " + dimStr + "\n")
             if type(value) == list:
-                #print "DEBUG value", adverb, value
+                # print("DEBUG value", adverb, value)
                 for x in value:
                     if x:
-                        file.write(" T") # Write data to file.
+                        file.write(" T")  # Write data to file.
                     else:
                         file.write(" F")
             else:
                 if value:
-                    file.write(" T")    # Write data to file.
+                    file.write(" T")  # Write data to file.
                 else:
                     file.write(" F")
             file.write("\n")
         elif dtype == int:
             file.write("$Key = " + adverb + " Int " + dimStr + "\n")
-            file.write(data + "\n" )    # Write data to file.
+            file.write(data + "\n")  # Write data to file.
         else:
-            #print "DEBUG ObitTask adverb", adverb, dim, dtype
+            # print("DEBUG ObitTask adverb", adverb, dim, dtype)
             raise AssertionError(type(value))
 
     def __read_adverb(self, params, file, adverb):
         """read value from output file."""
+        assert adverb in params.output_list
 
-        assert(adverb in params.output_list)
-
-        gotIt = False    # Not yet found entry
-        count = 0        # no values parset yet
+        gotIt = False  # Not yet found entry
+        count = 0  # no values parset yet
         total = 1
-        value = []       # to accept
+        value = []  # to accept
         for line in file:
             # DEBUG
-            #print line
+            # print(line)
             # Look for header for parameter
             if line.startswith("$Key  " + adverb):
                 gotIt = True
                 parts = string.split(line)
                 # How many values
                 total = 1
-                # DEBUG print parts  
+                # DEBUG print parts
                 for x in parts[3:]:
                     total *= int(x)
-                dtype  = parts[2]
-                if type=="str":
-                    total = total / parts[3] # Number of strings.
+                dtype = parts[2]
+                if type == "str":
+                    total = total / parts[3]  # Number of strings.
 
             # Read data one value per line after 'gotIt'.
             elif gotIt:
                 # DEBUG print "gotIt", type, line
-                if dtype == 'Flt':
+                if dtype == "Flt":
                     value.append(float(line))
-                elif dtype == 'Dbl':
+                elif dtype == "Dbl":
                     value.append(float(line))
-                elif dtype == 'Str':
+                elif dtype == "Str":
                     value.append(line)
-                elif dtype == 'Int':
+                elif dtype == "Int":
                     value.append(int(line))
-                elif dtype == 'Boo':
-                    if line.startswith('T'):
+                elif dtype == "Boo":
+                    if line.startswith("T"):
                         value.append(True)
                     else:
                         value.append(False)
                 count = count + 1
 
             if gotIt and count >= total:  # Finished?
-                    break
+                break
 
         # Convert to scalar if only one.
-        if len(value)==1:
+        if len(value) == 1:
             value = value[0]
         # Done
         # DEBUG print "fetch adverb", adverb, value
@@ -342,7 +353,6 @@ class ObitTask(Task):
 
     def spawn(self, name, version, userno, msgkill, isbatch, input_dict):
         """Start the task."""
-
         params = _ObitTaskParams(name, version)
         popsno = _allocate_popsno()
         index = popsno - 1
@@ -359,17 +369,26 @@ class ObitTask(Task):
         in_file.close()
 
         # If debugging add a link to the input file to preserve it.
-        if input_dict['DEBUG']:
-            tmpDebug = tmpInput + 'Dbg'
+        if input_dict["DEBUG"]:
+            tmpDebug = tmpInput + "Dbg"
             if os.access(tmpDebug, os.F_OK):
-                os.unlink(tmpDebug)     # Remove any old version file.
-            os.link(tmpInput, tmpDebug) # Add new link.
+                os.unlink(tmpDebug)  # Remove any old version file.
+            os.link(tmpInput, tmpDebug)  # Add new link.
             # Tell about it.
             print("Saving copy of Obit task input in" + tmpDebug)
 
-        path = os.environ['OBIT'] +'/bin/' + os.environ['ARCH'] + '/' + name
-        arglist = [name, "-input", tmpInput, "-output", tmpOutput,
-                   "-pgmNumber", str(popsno), "-AIPSuser", str(userno)]
+        path = os.environ["OBIT"] + "/bin/" + os.environ["ARCH"] + "/" + name
+        arglist = [
+            name,
+            "-input",
+            tmpInput,
+            "-output",
+            tmpOutput,
+            "-pgmNumber",
+            str(popsno),
+            "-AIPSuser",
+            str(userno),
+        ]
         tid = Task.spawn(self, path, arglist)
         self._params[tid] = params
         self._popsno[tid] = popsno
@@ -377,15 +396,13 @@ class ObitTask(Task):
 
     def messages(self, tid):
         """Return task's messages."""
-
         # Add a default priority to the messages
         messages = Task.messages(self, tid)
         return [(1, msg) for msg in messages]
 
     def wait(self, tid):
         """Wait for the task to finish."""
-
-        assert(self.finished(tid))
+        assert self.finished(tid)
 
         params = self._params[tid]
         popsno = self._popsno[tid]
@@ -397,14 +414,14 @@ class ObitTask(Task):
         output_dict = {}
         for adverb in params.output_list:
             # Need to parse whole file each time as order not specified
-            out_file = open(tmpOutput, mode='r')
+            out_file = open(tmpOutput, mode="r")
             output_dict[adverb] = self.__read_adverb(params, out_file, adverb)
             out_file.close()
 
         if os.access(tmpInput, os.F_OK):
-            os.unlink(tmpInput)         # Remove input file.
+            os.unlink(tmpInput)  # Remove input file.
         if os.access(tmpOutput, os.F_OK):
-            os.unlink(tmpOutput)        # Remove output file.
+            os.unlink(tmpOutput)  # Remove output file.
 
         _free_popsno(popsno)
 
@@ -420,39 +437,40 @@ class ObitTask(Task):
 # files are named Obitx.yyy, where x is the POPS number (in extended
 # hex) and yyy is the process ID of the Obit instance.
 
+
 def _allocate_popsno():
-    for popsno in range(1,16):
+    for popsno in range(1, 16):
         # In order to prevent a race, first create a lock file for
         # POPSNO.
         try:
-            path = '/tmp/Obit' + ehex(popsno, 1, 0) + '.' + str(os.getpid())
+            path = "/tmp/Obit" + ehex(popsno, 1, 0) + "." + str(os.getpid())
             fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
             os.close(fd)
-        except:
+        except Exception:
             continue
 
         # Get a list of likely lock files and iterate over them.
         # Leave out our own lock file though.
-        files = glob.glob('/tmp/Obit' + ehex(popsno, 1, 0) + '.[0-9]*')
+        files = glob.glob("/tmp/Obit" + ehex(popsno, 1, 0) + ".[0-9]*")
         files.remove(path)
         for file in files:
             # If the part after the dot isn't an integer, it's not a
             # proper lock file.
             try:
-                pid = int(file.split('.')[1])
-            except:
+                pid = int(file.split(".")[1])
+            except Exception:
                 continue
 
             # Check whether the Obit instance is still alive.
             try:
                 os.kill(pid, 0)
-            except:
+            except Exception:
                 # The POPS number is no longer in use.  Try to clean
                 # up the lock file.  This might fail though if we
                 # don't own it.
                 try:
                     os.unlink(file)
-                except:
+                except Exception:
                     pass
             else:
                 # The POPS number is in use.
@@ -466,6 +484,7 @@ def _allocate_popsno():
 
     raise RuntimeError("No free Obit POPS number available on this system")
 
+
 def _free_popsno(popsno):
-    path = '/tmp/Obit' + ehex(popsno, 1, 0) + '.' + str(os.getpid())
+    path = "/tmp/Obit" + ehex(popsno, 1, 0) + "." + str(os.getpid())
     os.unlink(path)

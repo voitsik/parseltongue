@@ -25,10 +25,10 @@ def ehex(n, width=0, padding=None):
     """Convert a number into "extended hex".
 
     Returns the extended hex presentation for N, optionally padding it
-    up to WIDTH with PADDING."""
-
-    ehex_digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    result = ''
+    up to WIDTH with PADDING.
+    """
+    ehex_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = ""
 
     while n > 0:
         result = ehex_digits[n % len(ehex_digits)] + result

@@ -57,11 +57,11 @@ True
 
 """
 
-# Global AIPS defaults.
-import AIPS
-
 # Generic Python stuff.
 import sys
+
+# Global AIPS defaults.
+from . import AIPS
 
 # This code is way too clever.  Instead of implementing each and every
 # function call provided by a proxy, class _Method implements a
@@ -80,7 +80,6 @@ def _whoami():
 
 
 class _AIPSDataMethod:
-
     """This class implements dispatching function calls to a proxy."""
 
     def __init__(self, inst, name):
@@ -93,9 +92,8 @@ class _AIPSDataMethod:
 
 
 class _AIPSDataDesc:
-
     """This class implements the description of AIPS data that is used
-       when dispatching function calls to a proxy."""
+    when dispatching function calls to a proxy."""
 
     def __init__(self, name, klass, disk, seq, userno):
         self.name = name
@@ -109,26 +107,26 @@ class _AIPSDataDesc:
     def __getitem__(self, key):
         return self.__dict__[key]
 
+
 # class _AIPSDataDesc
 
 
 class _dictify(dict):
-
     def __getattr__(self, item):
         return self[item]
+
 
 # class _dictify
 
 
 class _AIPSDataHeader(_dictify):
-
     """This class describes the header of an AIPS image or UV data set."""
+
 
 # class _AIPSDataHeader
 
 
-class _AIPSData():
-
+class _AIPSData:
     """This class describes generic AIPS data."""
 
     def __init__(self, *args):
@@ -139,8 +137,7 @@ class _AIPSData():
         # Wizardry counterpart.
 
         if len(args) not in [1, 4, 5]:
-            msg = "__init__() takes 2, 5 or 6 arguments (%d given)" \
-                  % (len(args) + 1)
+            msg = "__init__() takes 2, 5 or 6 arguments (%d given)" % (len(args) + 1)
             raise TypeError(msg)
 
         if len(args) == 1:
@@ -168,14 +165,16 @@ class _AIPSData():
     def _set_name(self, name):
         self.desc.name = name
 
-    name = property(lambda self: self.desc.name, _set_name,
-                    doc='Name of this data set.')
+    name = property(
+        lambda self: self.desc.name, _set_name, doc="Name of this data set."
+    )
 
     def _set_klass(self, klass):
         self.desc.klass = klass
 
-    klass = property(lambda self: self.desc.klass, _set_klass,
-                     doc='Class of this data set.')
+    klass = property(
+        lambda self: self.desc.klass, _set_klass, doc="Class of this data set."
+    )
 
     def _set_disk(self, disk):
         self._disk = disk
@@ -183,25 +182,34 @@ class _AIPSData():
         self.desc.disk = disk.disk
         self.proxy = disk.proxy()
 
-    disk = property(lambda self: self._disk, _set_disk,
-                    doc='Disk where this data set is stored.')
+    disk = property(
+        lambda self: self._disk, _set_disk, doc="Disk where this data set is stored."
+    )
 
     def _set_seq(self, seq):
         self.desc.seq = seq
 
-    seq = property(lambda self: self.desc.seq, _set_seq,
-                   doc='Sequence number of this data set.')
+    seq = property(
+        lambda self: self.desc.seq, _set_seq, doc="Sequence number of this data set."
+    )
 
     def _set_userno(self, userno):
         self.desc.userno = userno
 
-    userno = property(lambda self: self.desc.userno, _set_userno,
-                      doc='User number used to access this data set.')
+    userno = property(
+        lambda self: self.desc.userno,
+        _set_userno,
+        doc="User number used to access this data set.",
+    )
 
     def __repr__(self):
-        repr = "%s('%s', '%s', %d, %d)" % \
-               (self.__class__.__name__,
-                self.name, self.klass, self.disk, self.seq)
+        repr = "%s('%s', '%s', %d, %d)" % (
+            self.__class__.__name__,
+            self.name,
+            self.klass,
+            self.disk,
+            self.seq,
+        )
         return repr
 
     def __eq__(self, other):
@@ -228,11 +236,10 @@ class _AIPSData():
         return _AIPSDataMethod(self, name)
 
     def __len__(self):
-        return _AIPSDataMethod(self, '_len')()
+        return _AIPSDataMethod(self, "_len")()
 
     def copy(self):
-        return self.__class__(self.name, self.klass, self.disk, self.seq,
-                              self.userno)
+        return self.__class__(self.name, self.klass, self.disk, self.seq, self.userno)
 
     def table(self, type, version):
         return _AIPSTable(self, type, version)
@@ -251,30 +258,32 @@ class _AIPSData():
         return self._method(_whoami())(self.desc)
 
     def _generate_header(self):
-        dict = self._method('header')(self.desc)
+        dict = self._method("header")(self.desc)
         return _AIPSDataHeader(dict)
-    header = property(_generate_header,
-                      doc='Header for this data set.')
+
+    header = property(_generate_header, doc="Header for this data set.")
 
     def _generate_keywords(self):
-        return _AIPSDataMethod(self, 'keywords')()
-    keywords = property(_generate_keywords,
-                        doc='Keywords for this data set.')
+        return _AIPSDataMethod(self, "keywords")()
+
+    keywords = property(_generate_keywords, doc="Keywords for this data set.")
 
     def _generate_tables(self):
-        dict = self._method('tables')(self.desc)
+        dict = self._method("tables")(self.desc)
         return dict
-    tables = property(_generate_tables,
-                      doc='Extension tables for this data set.')
 
-    history = property(lambda self: _AIPSHistory(self),
-                       doc='History table for this data set.')
+    tables = property(_generate_tables, doc="Extension tables for this data set.")
+
+    history = property(
+        lambda self: _AIPSHistory(self), doc="History table for this data set."
+    )
 
     def table_highver(self, type):
         """Get the highest version of an extension table.
 
         Returns the highest available version number of the extension
-        table TYPE."""
+        table TYPE.
+        """
         return self._method(_whoami())(self.desc, type)
 
     def rename(self, name=None, klass=None, seq=None, **kwds):
@@ -283,19 +292,20 @@ class _AIPSData():
         NAME is the new name, KLASS is the new class and SEQ is the
         new sequence number for the data set.  Note that you can't
         change the disk number, since that would require copying the
-        data."""
+        data.
+        """
         if name is None:
             name = self.name
         if klass is None:
             klass = self.klass
         if seq is None:
             seq = self.seq
-        if 'name' in kwds:
-            name = kwds['name']
-        if 'klass' in kwds:
-            klass = kwds['name']
-        if 'seq' in kwds:
-            seq = kwds['seq']
+        if "name" in kwds:
+            name = kwds["name"]
+        if "klass" in kwds:
+            klass = kwds["name"]
+        if "seq" in kwds:
+            seq = kwds["seq"]
         result = self._method(_whoami())(self.desc, name, klass, seq)
         self.name = result[0]
         self.klass = result[1]
@@ -314,7 +324,8 @@ class _AIPSData():
         """Get the header of an extension table.
 
         Returns the header of version VERSION of the extension table
-        TYPE."""
+        TYPE.
+        """
         return self._method(_whoami())(self.desc, type, version)
 
     # XXX Deprecated.
@@ -322,7 +333,8 @@ class _AIPSData():
         """Get a row from an extension table.
 
         Returns row ROWNO from version VERSION of extension table TYPE
-        as a dictionary."""
+        as a dictionary.
+        """
         return self._method(_whoami())(self.desc, type, version, rowno)
 
     def zap_table(self, type, version):
@@ -330,67 +342,67 @@ class _AIPSData():
 
         Deletes version VERSION of the extension table TYPE.  If
         VERSION is 0, delete the highest version of table TYPE.  If
-        VERSION is -1, delete all versions of table TYPE."""
+        VERSION is -1, delete all versions of table TYPE.
+        """
         return self._method(_whoami())(self.desc, type, version)
 
     def _generate_antennas(self):
-        return self._method('antennas')(self.desc)
-    antennas = property(_generate_antennas,
-                        doc='Antennas in this data set.')
+        return self._method("antennas")(self.desc)
+
+    antennas = property(_generate_antennas, doc="Antennas in this data set.")
 
     def _generate_polarizations(self):
-        return self._method('polarizations')(self.desc)
-    polarizations = property(_generate_polarizations,
-                             doc='Polarizations in this data set.')
+        return self._method("polarizations")(self.desc)
+
+    polarizations = property(
+        _generate_polarizations, doc="Polarizations in this data set."
+    )
 
     def _generate_sources(self):
-        return self._method('sources')(self.desc)
-    sources = property(_generate_sources,
-                       doc='Sources in this data set.')
+        return self._method("sources")(self.desc)
+
+    sources = property(_generate_sources, doc="Sources in this data set.")
 
     def _generate_stokes(self):
-        return self._method('stokes')(self.desc)
-    stokes = property(_generate_stokes,
-                      doc='Stokes parameters for this data set.')
+        return self._method("stokes")(self.desc)
+
+    stokes = property(_generate_stokes, doc="Stokes parameters for this data set.")
+
 
 # class AIPSData
 
 
 class AIPSImage(_AIPSData):
-
     """This class describes an AIPS image."""
 
 
 class AIPSUVData(_AIPSData):
-
     """This class describes an AIPS UV data set."""
 
 
 class _AIPSTableMethod(_AIPSDataMethod):
-
-    """ This class implements dispatching table oriented function
+    """This class implements dispatching table oriented function
     calls to a proxy."""
 
     def __init__(self, inst, name):
         _AIPSDataMethod.__init__(self, inst, name)
 
     def __call__(self, *args):
-        func = self.inst._data._method(self.name + '_table')
-        return func(self.inst._data.desc,
-                    self.inst._name, self.inst._version, *args)
+        func = self.inst._data._method(self.name + "_table")
+        return func(self.inst._data.desc, self.inst._name, self.inst._version, *args)
+
 
 # class _AIPSTableMethod
 
 
 class _AIPSTableRow(_dictify):
-
     """This class describes a row of an AIPS extenstion table."""
+
 
 # class _AIPSTableRow
 
 
 class _AIPSTableIter:
-
     """This class provides an iterator for AIPS extension tables."""
 
     def __init__(self, table):
@@ -405,11 +417,11 @@ class _AIPSTableIter:
         self._index += 1
         return result
 
+
 # class _AIPSTableIter
 
 
-class _AIPSTable():
-
+class _AIPSTable:
     """This class describes a generic AIPS extension table."""
 
     def __init__(self, data, name, version):
@@ -421,68 +433,70 @@ class _AIPSTable():
         return _AIPSTableMethod(self, name)
 
     def __getitem__(self, key):
-        dict = _AIPSTableMethod(self, '_getitem')(key)
+        dict = _AIPSTableMethod(self, "_getitem")(key)
         return _AIPSTableRow(dict)
 
     def __iter__(self):
         return _AIPSTableIter(self)
 
     def __len__(self):
-        return _AIPSTableMethod(self, '_len')()
+        return _AIPSTableMethod(self, "_len")()
 
     def _generate_keywords(self):
-        return _AIPSTableMethod(self, 'keywords')()
-    keywords = property(_generate_keywords,
-                        doc='Keywords for this table.')
+        return _AIPSTableMethod(self, "keywords")()
+
+    keywords = property(_generate_keywords, doc="Keywords for this table.")
 
     def _generate_name(self):
         return self._name
-    name = property(_generate_name, doc='Table extension name.')
+
+    name = property(_generate_name, doc="Table extension name.")
 
     def _generate_version(self):
-        return _AIPSTableMethod(self, 'version')()
-    version = property(_generate_version, doc='Table version.')
+        return _AIPSTableMethod(self, "version")()
+
+    version = property(_generate_version, doc="Table version.")
+
 
 # class _AIPSTable
 
 
 class _AIPSHistoryMethod(_AIPSDataMethod):
-
-    """ This class implements dispatching history oriented function
+    """This class implements dispatching history oriented function
     calls to a proxy."""
 
     def __init__(self, inst, name):
         _AIPSDataMethod.__init__(self, inst, name)
 
     def __call__(self, *args):
-        func = self.inst._data._method(self.name + '_history')
+        func = self.inst._data._method(self.name + "_history")
         return func(self.inst._data.desc, *args)
+
 
 # class _AIPSHistoryMethod
 
 
-class _AIPSHistory():
-
+class _AIPSHistory:
     """This class describes an AIPS hostory table."""
 
     def __init__(self, data):
         self._data = data
 
     def __getitem__(self, key):
-        return _AIPSHistoryMethod(self, '_getitem')(key)
+        return _AIPSHistoryMethod(self, "_getitem")(key)
+
 
 # class _AIPSHistory
 
 
 class _AIPSCatEntry(_dictify):
-
     """This class describes an AIPS catalog entry."""
+
 
 # class _AIPSCatEntry
 
 
-class AIPSCat():
-
+class AIPSCat:
     """This class describes an entire AIPS catalogue."""
 
     def __init__(self, disk=0):
@@ -506,33 +520,43 @@ class AIPSCat():
         return iter(self._cat.keys())
 
     def __str__(self):
-        s = ''
+        s = ""
         for disk in self._cat:
-            s += 'Catalog on disk %2d\n' % disk
-            s += ' Cat Mapname      Class   Seq  Pt     Last access\n'
+            s += "Catalog on disk %2d\n" % disk
+            s += " Cat Mapname      Class   Seq  Pt     Last access\n"
             if len(self._cat[disk]) > 0:
-                s += ''.join([' %3d %-12.12s.%-6.6s. %4d %-2.2s %s %s\n'
-                              % (entry.cno, entry.name, entry.klass,
-                                 entry.seq, entry.type, entry.date,
-                                 entry.time) for entry in self._cat[disk]])
+                s += "".join(
+                    [
+                        " %3d %-12.12s.%-6.6s. %4d %-2.2s %s %s\n"
+                        % (
+                            entry.cno,
+                            entry.name,
+                            entry.klass,
+                            entry.seq,
+                            entry.type,
+                            entry.date,
+                            entry.time,
+                        )
+                        for entry in self._cat[disk]
+                    ]
+                )
 
         return s.strip()
 
     def zap(self, force=False, **kwds):
         """Removes a catalogue entry."""
-
         name = None
-        if 'name' in kwds:
-            name = kwds['name']
-            del kwds['name']
+        if "name" in kwds:
+            name = kwds["name"]
+            del kwds["name"]
         klass = None
-        if 'klass' in kwds:
-            klass = kwds['klass']
-            del kwds['klass']
+        if "klass" in kwds:
+            klass = kwds["klass"]
+            del kwds["klass"]
         seq = None
-        if 'seq' in kwds:
-            seq = kwds['seq']
-            del kwds['seq']
+        if "seq" in kwds:
+            seq = kwds["seq"]
+            del kwds["seq"]
 
         # Make sure we don't zap if the user made a typo.
         if len(kwds) > 0:
@@ -542,26 +566,30 @@ class AIPSCat():
 
         for disk in self._cat:
             for entry in self._cat[disk]:
-                if name and not entry['name'] == name:
+                if name and not entry["name"] == name:
                     continue
-                if klass and not entry['klass'] == klass:
+                if klass and not entry["klass"] == klass:
                     continue
-                if seq and not entry['seq'] == seq:
+                if seq and not entry["seq"] == seq:
                     continue
-                if entry['type'] == 'MA':
-                    AIPSImage(entry['name'], entry['klass'],
-                              disk, entry['seq']).zap(force)
-                elif entry['type'] == 'UV':
-                    AIPSUVData(entry['name'], entry['klass'],
-                               disk, entry['seq']).zap(force)
+                if entry["type"] == "MA":
+                    AIPSImage(entry["name"], entry["klass"], disk, entry["seq"]).zap(
+                        force
+                    )
+                elif entry["type"] == "UV":
+                    AIPSUVData(entry["name"], entry["klass"], disk, entry["seq"]).zap(
+                        force
+                    )
                 continue
             continue
+
 
 # class AIPSCat
 
 
 # Tests.
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
+
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])

@@ -14,11 +14,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-class AIPS:
 
+class AIPS:
     """Container for several AIPS-related default values."""
 
     # Default AIPS systen format revision.
-    revision = 'D'
+    revision = "D"
 
-    pass                                # class AIPS
+    pass  # class AIPS

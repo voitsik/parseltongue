@@ -100,58 +100,72 @@
 # Generic Python stuff.
 import copy
 import fcntl
-# import glob
 import os
-# import pickle
 import pydoc
 import select
 import signal
 import sys
 
 # Global AIPS defaults.
-import AIPS
-import AIPSTV
+# Default proxy.
+from . import AIPS, AIPSTV, LocalProxy
 
 # Generic Task implementation.
-from Task import Task, List
-
-# Default proxy.
-import LocalProxy
+from .Task import List, Task
 
 
 class AIPSTask(Task):
-
     """This class implements running AIPS tasks."""
 
     # Package.
-    _package = 'AIPS'
+    _package = "AIPS"
 
     # List of adverbs referring to data.
-    _data_adverbs = ['indata', 'outdata',
-                     'in2data', 'in3data', 'in4data', 'out2data']
+    _data_adverbs = ["indata", "outdata", "in2data", "in3data", "in4data", "out2data"]
 
     # List of adverbs referring to disks.
-    _disk_adverbs = ['indisk', 'outdisk',
-                     'in2disk', 'in3disk', 'in4disk', 'out2disk']
+    _disk_adverbs = ["indisk", "outdisk", "in2disk", "in3disk", "in4disk", "out2disk"]
 
     # List of adverbs referring to file names.
     # some new for 31DEC08
     # O.W.  07 Nov 2008
-    _file_adverbs = ['infile', 'infile2', 'outfile', 'outprint',
-                     'ofmfile', 'boxfile', 'oboxfile',
-                     'intext', 'outtext', 'datain', 'dataout', 'calin',
-                     'inlist', 'data2in'
-                     ]
+    _file_adverbs = [
+        "infile",
+        "infile2",
+        "outfile",
+        "outprint",
+        "ofmfile",
+        "boxfile",
+        "oboxfile",
+        "intext",
+        "outtext",
+        "datain",
+        "dataout",
+        "calin",
+        "inlist",
+        "data2in",
+    ]
 
     # List of adverbs referring to channels.
-    _chan_adverbs = ['bchan', 'echan', 'chansel', 'channel']
+    _chan_adverbs = ["bchan", "echan", "chansel", "channel"]
 
     # List of adverbs referring to image dimensions.
-    _box_adverbs = ['blc', 'trc', 'tblc', 'ttrc', 'pixxy', 'imsize', 'box',
-                    'clbox', 'fldsize', 'pix2xy', 'uvsize']
+    _box_adverbs = [
+        "blc",
+        "trc",
+        "tblc",
+        "ttrc",
+        "pixxy",
+        "imsize",
+        "box",
+        "clbox",
+        "fldsize",
+        "pix2xy",
+        "uvsize",
+    ]
 
     # Default version.
-    version = os.environ.get('VERSION', 'NEW')
+    version = os.environ.get("VERSION", "NEW")
 
     # Default user number.
     userno = -1
@@ -166,7 +180,7 @@ class AIPSTask(Task):
     tv = AIPSTV.AIPSTV()
 
     # This should be set to a file object...
-    log = open("/dev/null", 'a')
+    log = open("/dev/null", "a")
 
     def __init__(self, name, **kwds):
         Task.__init__(self)
@@ -176,8 +190,8 @@ class AIPSTask(Task):
         self._message_list = []
 
         # Optional arguments.
-        if 'version' in kwds:
-            self.version = kwds['version']
+        if "version" in kwds:
+            self.version = kwds["version"]
 
         # Update default user number.
         if self.userno == -1:
@@ -201,14 +215,14 @@ class AIPSTask(Task):
 
         # The XML-RPC proxy will return the details as a dictionary,
         # not a class.
-        self._default_dict = params['default_dict']
-        self._input_list = params['input_list']
-        self._output_list = params['output_list']
-        self._min_dict = params['min_dict']
-        self._max_dict = params['max_dict']
-        self._strlen_dict = params['strlen_dict']
-        self._help_string = params['help_string']
-        self._explain_string = params['explain_string']
+        self._default_dict = params["default_dict"]
+        self._input_list = params["input_list"]
+        self._output_list = params["output_list"]
+        self._min_dict = params["min_dict"]
+        self._max_dict = params["max_dict"]
+        self._strlen_dict = params["strlen_dict"]
+        self._help_string = params["help_string"]
+        self._explain_string = params["explain_string"]
         for adverb in self._default_dict:
             if isinstance(self._default_dict[adverb], list):
                 value = self._default_dict[adverb]
@@ -266,7 +280,7 @@ class AIPSTask(Task):
         """Display ADVERBS."""
 
         for adverb in adverbs:
-            if self.__dict__[adverb] == '':
+            if self.__dict__[adverb] == "":
                 print("'%s': ''" % adverb)
             else:
                 value = PythonList(self.__dict__[adverb])
@@ -276,9 +290,7 @@ class AIPSTask(Task):
         """Display more help for this task."""
 
         if self._explain_string:
-            pydoc.pager(self._help_string +
-                        64 * '-' + '\n' +
-                        self._explain_string)
+            pydoc.pager(self._help_string + 64 * "-" + "\n" + self._explain_string)
 
     def inputs(self):
         """Display all inputs for this task."""
@@ -323,8 +335,7 @@ class AIPSTask(Task):
                     proxy.__nonzero__ = lambda: True
 
                 if AIPS.disks[disk].url != url:
-                    raise RuntimeError(
-                        "AIPS disks are not on the same machine")
+                    raise RuntimeError("AIPS disks are not on the same machine")
                 input_dict[adverb] = float(AIPS.disks[disk].disk)
 
         if not proxy:
@@ -339,8 +350,15 @@ class AIPSTask(Task):
             raise RuntimeError("Unable to determine where to execute task")
 
         inst = getattr(proxy, self.__class__.__name__)
-        tid = inst.spawn(self._name, self.version, self.userno, self.msgkill,
-                         self.isbatch, str(self.tv), input_dict)
+        tid = inst.spawn(
+            self._name,
+            self.version,
+            self.userno,
+            self.msgkill,
+            self.isbatch,
+            str(self.tv),
+            input_dict,
+        )
 
         self._message_list = []
         return (proxy, tid)
@@ -397,7 +415,7 @@ class AIPSTask(Task):
         (proxy, tid) = self.spawn()
         loglist = []
         count = 0
-        rotator = ['|\b', '/\b', '-\b', '\\\b']
+        rotator = ["|\b", "/\b", "-\b", "\\\b"]
         try:
             try:
                 while not self.finished(proxy, tid):
@@ -429,13 +447,13 @@ class AIPSTask(Task):
         finally:
             if self.log:
                 for message in loglist:
-                    self.log.write('%s\n' % message)
+                    self.log.write("%s\n" % message)
 
                 self.log.flush()
 
             if AIPS.log:
                 for message in loglist:
-                    AIPS.log.write('%s\n' % message)
+                    AIPS.log.write("%s\n" % message)
 
                 AIPS.log.flush()
 
@@ -444,27 +462,29 @@ class AIPSTask(Task):
 
     def __getattr__(self, name):
         if name in self._data_adverbs:
+
             class _AIPSData:
                 pass
+
             value = _AIPSData()
-            prefix = name.replace('data', '')
-            value.name = Task.__getattr__(self, prefix + 'name')
-            value.klass = Task.__getattr__(self, prefix + 'class')
-            value.disk = Task.__getattr__(self, prefix + 'disk')
-            value.seq = Task.__getattr__(self, prefix + 'seq')
+            prefix = name.replace("data", "")
+            value.name = Task.__getattr__(self, prefix + "name")
+            value.klass = Task.__getattr__(self, prefix + "class")
+            value.disk = Task.__getattr__(self, prefix + "disk")
+            value.seq = Task.__getattr__(self, prefix + "seq")
             return value
         return Task.__getattr__(self, name)
 
     def __setattr__(self, name, value):
         if name in self._data_adverbs:
-            prefix = name.replace('data', '')
-            Task.__setattr__(self, prefix + 'name', value.name)
-            Task.__setattr__(self, prefix + 'class', value.klass)
-            Task.__setattr__(self, prefix + 'disk', value.disk)
-            Task.__setattr__(self, prefix + 'seq', value.seq)
-        elif name == 'intable':
-            Task.__setattr__(self, 'inext', value.name)
-            Task.__setattr__(self, 'invers', value.version)
+            prefix = name.replace("data", "")
+            Task.__setattr__(self, prefix + "name", value.name)
+            Task.__setattr__(self, prefix + "class", value.klass)
+            Task.__setattr__(self, prefix + "disk", value.disk)
+            Task.__setattr__(self, prefix + "seq", value.seq)
+        elif name == "intable":
+            Task.__setattr__(self, "inext", value.name)
+            Task.__setattr__(self, "invers", value.version)
         else:
             # We treat 'infile', 'outfile' and 'outprint' special.
             # Instead of checking the length of the complete string,
@@ -472,15 +492,18 @@ class AIPSTask(Task):
             # pathname.  The backend will split of the direcrory
             # component and use that as an "area".
             attr = self._findattr(name)
-            if attr in self._file_adverbs and isinstance(value, str) and \
-                    os.path.dirname(value):
+            if (
+                attr in self._file_adverbs
+                and isinstance(value, str)
+                and os.path.dirname(value)
+            ):
                 if len(os.path.basename(value)) > self._strlen_dict[attr] - 2:
-                    msg = "string '%s' is too long for attribute '%s'" \
-                          % (value, attr)
+                    msg = "string '%s' is too long for attribute '%s'" % (value, attr)
                     raise ValueError(msg)
                 self.__dict__[attr] = value
             else:
                 Task.__setattr__(self, name, value)
+
 
 # class AIPSTask
 
@@ -497,10 +520,10 @@ class AIPSMessageLog:
 
     def zap(self):
         """Zap message log."""
-
         proxy = AIPS.disks[1].proxy()
         inst = getattr(proxy, self.__class__.__name__)
         return inst.zap(self.userno)
+
 
 # class AIPSMessageLog
 
@@ -510,7 +533,6 @@ def AIPSList(list_):
 
     Returns a list suitable for using 1-based indices.
     """
-
     try:
         # Make sure we don't consider strings to be lists.
         if str(list_) == list_:
@@ -536,7 +558,6 @@ def PythonList(list_):
 
     Returns a list suitable for using normal 0-based indices.
     """
-
     try:
         if list_[0] is not None:
             return list_
@@ -554,7 +575,8 @@ def PythonList(list_):
 
 
 # Tests.
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
+
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])

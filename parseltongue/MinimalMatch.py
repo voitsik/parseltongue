@@ -81,7 +81,7 @@ AttributeError: MyClass instance has no attribute '_does_not_exist'
 
 
 class MinimalMatch:
-    """ Allow class attribute names to be abbreviated. """
+    """Allow class attribute names to be abbreviated."""
 
     def _findattr(self, name):
         # Disregard private attributes.
