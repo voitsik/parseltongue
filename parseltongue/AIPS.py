@@ -82,43 +82,43 @@ log = None
 # really die, but removing it will probably affect most scripts.
 
 
-class _AIPS:
-    """Backwards compatibility gunk."""
+# class _AIPS:
+#     """Backwards compatibility gunk."""
 
-    def _get_userno(self):
-        return sys.modules[__name__].userno
+#     def _get_userno(self):
+#         return sys.modules[__name__].userno
 
-    def _set_userno(self, value):
-        sys.modules[__name__].userno = value
+#     def _set_userno(self, value):
+#         sys.modules[__name__].userno = value
 
-    userno = property(_get_userno, _set_userno)
+#     userno = property(_get_userno, _set_userno)
 
-    def _get_disks(self):
-        return sys.modules[__name__].disks
+#     def _get_disks(self):
+#         return sys.modules[__name__].disks
 
-    def _set_disks(self, value):
-        sys.modules[__name__].disks = value
+#     def _set_disks(self, value):
+#         sys.modules[__name__].disks = value
 
-    disks = property(_get_disks, _set_disks)
+#     disks = property(_get_disks, _set_disks)
 
-    def _get_log(self):
-        return sys.modules[__name__].log
+#     def _get_log(self):
+#         return sys.modules[__name__].log
 
-    def _set_log(self, value):
-        sys.modules[__name__].log = value
+#     def _set_log(self, value):
+#         sys.modules[__name__].log = value
 
-    log = property(_get_log, _set_log)
+#     log = property(_get_log, _set_log)
 
-    def _get_debuglog(self):
-        return sys.modules[__name__].debuglog
+#     def _get_debuglog(self):
+#         return sys.modules[__name__].debuglog
 
-    def _set_debuglog(self, value):
-        sys.modules[__name__].debuglog = value
+#     def _set_debuglog(self, value):
+#         sys.modules[__name__].debuglog = value
 
-    debuglog = property(_get_debuglog, _set_debuglog)
-
-
-# class _AIPS
+#     debuglog = property(_get_debuglog, _set_debuglog)
 
 
-AIPS = _AIPS()
+# # class _AIPS
+
+
+# AIPS = _AIPS()
