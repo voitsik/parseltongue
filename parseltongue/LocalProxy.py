@@ -21,8 +21,6 @@ without doing any RPC.
 
 """
 
-import sys
-
 # Global AIPS defaults.
 from . import AIPS
 
@@ -33,9 +31,9 @@ AIPSTask = ProxyAIPSTask.AIPSTask()
 AIPSMessageLog = ProxyAIPSTask.AIPSMessageLog()
 
 # The same goes for the ObitTask module.
-from .Proxy import ObitTask as ProxyObitTask
+# from .Proxy import ObitTask as ProxyObitTask
 
-ObitTask = ProxyObitTask.ObitTask()
+# ObitTask = ProxyObitTask.ObitTask()
 
 # The AIPSData module depends on Obit.  Since Obit might not be
 # available, leave out the AIPSUVData and AIPSImage instances if we
