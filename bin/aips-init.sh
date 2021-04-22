@@ -2,7 +2,12 @@
 
 # Init AIPS
 if [ -z "$AIPS_ROOT" ]; then
-    . /home/aips/LOGIN.SH
+    aips_login="/home/aips/LOGIN.SH"
+    if [ -f "$aips_login" ]; then
+        . "${aips_login}"
+    else
+        echo "Could not find LOGIN.SH. Please init AIPS environment manually."
+    fi
 fi
 
 # If AIPS is available, make its data disks and printers available.
