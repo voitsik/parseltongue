@@ -16,7 +16,8 @@
 
 # Generic Python stuff.
 import os
-import sys
+
+import numpy as np
 
 # Obit stuff.
 from obit import (
@@ -29,45 +30,12 @@ from obit import (
     TableList,
 )
 
-# Global AIPS defaults.
-# from .. import AIPS
-
-# Select numarray or NumPy, fail gracefully if neither is available.
-try:
-    numerix = os.environ["NUMERIX"]
-except KeyError:
-    numerix = "numarray"
-
-try:
-    import numarray
-
-    numarraystatus = True
-except ImportError:
-    numarraystatus = False
-
-try:
-    import numpy as np
-
-    numpystatus = True
-except ImportError:
-    numpystatus = False
-
-if numarraystatus and numpystatus:
-    # Both numarray and NumPy are available.  Let the NUMERIX
-    # environment variable decide which one we use.
-    if numerix == "numpy":
-        numarraystatus = False
-    else:
-        numpystatus = False
-
 
 def _array(sequence, shape):
-    if numpystatus:
-        arr = np.frombuffer(sequence, dtype=np.float32)
-        arr.shape = shape
-        return arr
-    else:
-        return numarray.array(sequence, type=numarray.Float32, shape=shape)
+    arr = np.frombuffer(sequence, dtype=np.float32)
+    arr.shape = shape
+
+    return arr
 
 
 def _scalarize(value):
@@ -168,6 +136,7 @@ class _AIPSTableRow:
 
 class AIPSTableRow(_AIPSTableRow):
     """This class is used as a template row for an extension table."""
+
     def __init__(self, table):
         _AIPSTableRow.__init__(self, table._table, table._columns, -1, table._err)
         header = table._table.Desc.Dict
@@ -332,7 +301,7 @@ class _AIPSTable:
         self._table = data.NewTable(3, name, version, self._err)
         self._table.Open(3, self._err)
         if self._err.isErr:
-            raise self._err
+            raise RuntimeError
         header = self._table.Desc.Dict
         self._columns = {}
         self._keys = []
@@ -458,11 +427,6 @@ class _AIPSVisibility(object):
     """This class is used as an iterator over visibilities."""
 
     def __init__(self, data, err, index):
-        # Give an early warning we're not going to succeed.
-        if not numarraystatus and not numpystatus:
-            msg = "Numerical Python (numarray or NumPy) not available"
-            raise NotImplementedError(msg)
-
         self._err = err
         self._data = data
         self._index = -1
@@ -647,12 +611,8 @@ class _AIPSVisibility(object):
         return visibility
 
     def _set_visibility(self, value):
-        if numpystatus:
-            value = value.ravel()
-        else:
-            value = value.getflat()
+        value = value.ravel()
         self._buffer[self._index][self._desc["nrparm"] :] = value
-        return
 
     visibility = property(_get_visibility, _set_visibility)
 
@@ -806,7 +766,7 @@ class _AIPSDataKeywords:
         elif _type == 14:
             value = bool(value)
             InfoList.PAlwaysPutBoolean(
-                self._table.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
+                self._data.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
         else:
             raise AssertionError("not implemented")
@@ -944,7 +904,7 @@ class _AIPSDataHeader(object):
     pass  # class _AIPSDataHeader
 
 
-class _AIPSData(object):
+class _AIPSData:
     """This class is used to access generic AIPS data."""
 
     def __init__(self, *args):
@@ -1082,6 +1042,7 @@ class _AIPSData(object):
         # a chance it'll fail if somebody does a RECAT.
         if seq == 0:
             from obit import AIPSDir
+
             cno = self._data.Acno
             entry = AIPSDir.PInfo(self.disk, self.userno, cno, self._err)
             if name == entry[0:12].strip() and klass == entry[13:19].strip():
@@ -1166,7 +1127,7 @@ class AIPSImage(_AIPSData):
         self._type = "MA"
         if userno == -1:
             userno = AIPS.userno
-            pass
+
         self._userno = userno
         self._err = OErr.OErr()
         self._squeezed = False
@@ -1174,7 +1135,7 @@ class AIPSImage(_AIPSData):
         self._data = Image.newPAImage(name, name, klass, disk, seq, True, self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
+
 
     def _pixels(self):
         Obit.ImageRead(self._data.me, self._err.me)
@@ -1275,7 +1236,7 @@ class AIPSUVData(_AIPSData):
         if not self._open:
             self._data.Open(3, self._err)
             self._open = True
-            pass
+
         if isinstance(name, str):
             return _AIPSVisibilitySel(self, name)
         elif isinstance(name, slice):
@@ -1350,14 +1311,15 @@ class AIPSUVData(_AIPSData):
         no_if = header["inaxes"][jlocif]
         if "no_if" in kwds:
             no_if = kwds["no_if"]
-            pass
+
         no_pol = len(self.polarizations)
         if "no_pol" in kwds:
             no_pol = kwds["no_pol"]
-            pass
+
         data = Obit.UVCastData(self._data.me)
         if name == "AIPS AI":
-            Obit.TableAI(data, [version], 3, name, kwds["no_term"], self._err.me)
+            # Obit.TableAI(data, [version], 3, name, kwds["no_term"], self._err.me)
+            raise NotImplementedError("AIPS AI")
         elif name == "AIPS CL":
             Obit.TableCL(
                 data, [version], 3, name, no_pol, no_if, kwds["no_term"], self._err.me
