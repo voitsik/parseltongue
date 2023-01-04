@@ -14,9 +14,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# Generic Python stuff.
-import os
-
 import numpy as np
 
 # Obit stuff.
@@ -33,9 +30,8 @@ from obit import (
 
 def _array(sequence, shape):
     arr = np.frombuffer(sequence, dtype=np.float32)
-    arr.shape = shape
 
-    return arr
+    return arr.reshape(shape)
 
 
 def _scalarize(value):
@@ -82,8 +78,6 @@ class _AIPSTableRow:
                 raise IndexError("list index out of range")
             if self._err.isErr:
                 raise RuntimeError
-            pass
-        return
 
     def __str__(self):
         return str(self._generate_dict())
@@ -121,7 +115,6 @@ class _AIPSTableRow:
 
     def __setitem__(self, name, value):
         self.__setattr__(name, value)
-        return
 
     def update(self):
         """Update this row."""
@@ -129,7 +122,6 @@ class _AIPSTableRow:
         self._table.WriteRow(self._rownum + 1, self._row, self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
     pass  # class _AIPSTableRow
 
@@ -317,7 +309,6 @@ class _AIPSTable:
             continue
         self.name = name
         self.version = header["version"]
-        return
 
     def close(self):
         """Close this extension table.
@@ -332,7 +323,6 @@ class _AIPSTable:
         self._table.Close(self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
     # The following functions make an extension table behave as a list
     # of rows.
@@ -441,12 +431,12 @@ class _AIPSVisibility(object):
                 self._subarray = self._desc["ptype"].index("SUBARRAY")
             except BaseException:
                 pass
-            pass
+
         self._first = 0
         self._count = 0
         self._flush = False
         if index > -1:
-            shape = len(self._data.VisBuf) / 4
+            shape = len(self._data.VisBuf) // 4
             self._buffer = _array(self._data.VisBuf, shape)
             self._first = self._data.Desc.Dict["firstVis"] - 1
             self._count = self._data.Desc.Dict["numVisBuff"]
@@ -459,11 +449,8 @@ class _AIPSVisibility(object):
                 or index >= self._first + self._count
             ):
                 self._fill(index)
-                pass
 
             self._index = index - self._first
-            pass
-        return
 
     def _fill(self, index=None):
         if self._flush:
@@ -472,17 +459,17 @@ class _AIPSVisibility(object):
             if self._err.isErr:
                 raise RuntimeError
             self._flush = False
-            pass
+
         if index:
             d = self._data.IODesc.Dict
             count = InfoList.PGet(self._data.List, "nVisPIO")[4][0]
             d["firstVis"] = max(0, index - count + 1)
             self._data.IODesc.Dict = d
-            pass
+
         Obit.UVRead(self._data.me, self._err.me)
         if self._err.isErr:
             raise RuntimeError
-        shape = len(self._data.VisBuf) / 4
+        shape = len(self._data.VisBuf) // 4
         self._buffer = _array(self._data.VisBuf, shape)
         self._first = self._data.Desc.Dict["firstVis"] - 1
         self._count = self._data.Desc.Dict["numVisBuff"]
@@ -620,34 +607,31 @@ class _AIPSVisibility(object):
 
 
 class _AIPSVisibilityIter(_AIPSVisibility):
-    def __init__(self, data, err, ranges=[]):
+    def __init__(self, data, err, ranges=None):
         if data.Desc.Dict["firstVis"] > 0:
             data.Open(3, err)
 
         _AIPSVisibility.__init__(self, data, err, -1)
         self._len = self._desc["nvis"]
-        if len(ranges) == 0:
+        if not ranges:
             ranges = [(0, self._len)]
-            pass
+
         self._ranges = ranges
         self._range = self._ranges.pop(0)
-        return
 
     def __next__(self):
         self._index += 1
         if self._index + self._first > self._range[1]:
             try:
                 self._range = self._ranges.pop(0)
-            except BaseException:
+            except Exception:
                 pass
 
         while self._first + self._count < self._range[0]:
             self._fill()
-            pass
 
         if self._index + self._first < self._range[0]:
             self._index = self._range[0] - self._first
-            pass
 
         if self._index + self._first >= self._range[1]:
             if self._flush:
