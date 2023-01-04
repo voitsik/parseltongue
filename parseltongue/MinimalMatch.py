@@ -29,21 +29,21 @@ abbreviated:
 For instance the following command will set the 'user' attribute:
 
 >>> my_instance.u = 'nobody'
->>> print my_instance.user
+>>> print(my_instance.user)
 nobody
 
 But of course you can always use the full attribute name:
 
 >>> my_instance.user = 'root'
->>> print my_instance.us
+>>> print(my_instance.us)
 root
 
 Never type more than the full attribute name:
 
->>> print my_instance.users
+>>> print(my_instance.users)
 Traceback (most recent call last):
   ...
-AttributeError: MyClass instance has no attribute 'users'
+AttributeError: MyClass instance has no attribute 'users'. Did you mean: 'user'?
 
 Abbreviations should not be ambiguous:
 
@@ -60,19 +60,19 @@ Traceback (most recent call last):
   ...
 AttributeError: MyClass instance has no attribute 'group'
 
->>> print my_instance.stop
+>>> print(my_instance.stop)
 tomorrow
 
 Getting and setting private attributes should just work:
 
 >>> my_instance._private = ('do', 'not', 'touch')
->>> print my_instance._private
+>>> print(my_instance._private)
 ('do', 'not', 'touch')
 
 And accesing non-existent private attributes should fail (and not land
 us in an infinite loop):
 
->>> print my_instance._does_not_exist
+>>> print(my_instance._does_not_exist)
 Traceback (most recent call last):
   ...
 AttributeError: MyClass instance has no attribute '_does_not_exist'
@@ -121,11 +121,3 @@ class MinimalMatch:
     def __setattr__(self, name, value):
         attr = self._findattr(name)
         self.__dict__[attr] = value
-
-
-# Tests.
-if __name__ == '__main__':
-    import doctest
-    import sys
-    results = doctest.testmod(sys.modules[__name__])
-    sys.exit(results[0])

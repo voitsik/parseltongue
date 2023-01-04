@@ -36,10 +36,10 @@ attributes:
 
 It still has the property that attribute names can be abbreviated:
 
->>> print my_task.ind
+>>> print(my_task.ind)
 0
 >>> my_task.ind = 1
->>> print my_task.ind
+>>> print(my_task.ind)
 1
 
 But an exception will be thrown if you try to assign a value that is
@@ -73,25 +73,25 @@ Assigning an integer value to a floating point attribute is perfectly
 fine of course:
 
 >>> my_task.pixavg = 2
->>> print my_task.pixavg
+>>> print(my_task.pixavg)
 2.0
 
 The same should happen for lists:
 
 >>> my_task.aparms = 10*[1]
->>> print my_task.aparms
+>>> print(my_task.aparms)
 [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 For subscripting:
 
 >>> my_task.aparms[0] = 0
->>> print my_task.aparms
+>>> print(my_task.aparms)
 [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 And slice assignment:
 
 >>> my_task.aparms[1:3] = [1, 2]
->>> print my_task.aparms
+>>> print(my_task.aparms)
 [0.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 You're not allowed to change the length of the list through slice
@@ -100,7 +100,7 @@ assignment though:
 >>> my_task.aparms[3:6] = [3, 4, 5, 6]
 Traceback (most recent call last):
   ...
-TypeError: slice '3:6' changes the array size of attribute 'aparms'
+TypeError: array '[3, 4, 5, 6]' is too big for attribute 'aparms'
 
 To provide 1-based indexing used by several packages, you can set the
 element at index zero of an array to 'None'.  This prevents setting that
@@ -116,7 +116,6 @@ ValueError: setting element '0' is prohibited
 # Generic Python stuff
 import copy
 import pydoc
-import sys
 
 from .MinimalMatch import MinimalMatch
 
@@ -144,7 +143,7 @@ class List(list):
     def __setslice__(self, low, high, seq):
         high = min(high, len(self))
         if len(seq) > high - low or (len(seq) < high - low and high < len(self)):
-            msg = "slice '%d:%d' changes the array size of" " attribute '%s'" % (
+            msg = "slice '%d:%d' changes the array size of attribute '%s'" % (
                 low,
                 high,
                 self._attr,
@@ -165,7 +164,6 @@ class Task(MinimalMatch):
         self._max_dict = {}
         self._strlen_dict = {}
         self._help_string = ""
-        return
 
     def help(self):
         """Display help for this task."""
@@ -186,7 +184,7 @@ class Task(MinimalMatch):
         # Handle lists recursively.
         if isinstance(value, list) and isinstance(default, list):
             if len(value) > len(default):
-                msg = "array '%s' is too big for attribute '%s'" % (value, attr)
+                msg = f"array '{value}' is too big for attribute '{attr}'"
                 raise TypeError(msg)
             validated_value = List(self, attr, default)
             for key in range(len(value)):
@@ -199,26 +197,26 @@ class Task(MinimalMatch):
 
         # Check attribute type.
         if not isinstance(value, type(default)):
-            msg = "value '%s' has invalid type for attribute '%s'" % (value, attr)
+            msg = f"value '{value}' has invalid type for attribute '{attr}'"
             raise TypeError(msg)
 
         # Check range.
         if attr in self._min_dict:
-            min = self._min_dict[attr]
-            if not min <= value:
-                msg = "value '%s' is out of range for attribute '%s'" % (value, attr)
+            min_val = self._min_dict[attr]
+            if not min_val <= value:
+                msg = f"value '{value}' is out of range for attribute '{attr}'"
                 raise ValueError(msg)
 
         if attr in self._max_dict:
-            max = self._max_dict[attr]
-            if not value <= max:
-                msg = "value '%s' is out of range for attribute '%s'" % (value, attr)
+            max_val = self._max_dict[attr]
+            if not value <= max_val:
+                msg = f"value '{value}' is out of range for attribute '{attr}'"
                 raise ValueError(msg)
 
         # Check string length.
         if attr in self._strlen_dict:
             if len(value) > self._strlen_dict[attr]:
-                msg = "string '%s' is too long for attribute '%s'" % (value, attr)
+                msg = f"string '{value}' is too long for attribute '{attr}'"
                 raise ValueError(msg)
 
         return value
@@ -230,13 +228,3 @@ class Task(MinimalMatch):
         if hasattr(self, attr):
             value = self._validateattr(attr, value, getattr(self, attr))
         self.__dict__[attr] = value
-
-        return
-
-
-# Tests.
-if __name__ == "__main__":
-    import doctest
-
-    results = doctest.testmod(sys.modules[__name__])
-    sys.exit(results[0])

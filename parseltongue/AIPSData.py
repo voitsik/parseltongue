@@ -35,7 +35,7 @@ False
 >>> uvdata.exists()
 False
 
->>> print uvdata
+>>> print(uvdata)
 AIPSUVData('NONAME', 'UVDATA', 1, 1)
 
 Checking whether two instance refer to the same data is fairly simple:
@@ -544,7 +544,7 @@ class AIPSCat:
         return s.strip()
 
     def zap(self, force=False, **kwds):
-        """Removes a catalogue entry."""
+        """Remove a catalogue entry."""
         name = None
         if "name" in kwds:
             name = kwds["name"]
@@ -583,11 +583,3 @@ class AIPSCat:
 
 
 # class AIPSCat
-
-
-# Tests.
-if __name__ == "__main__":
-    import doctest
-
-    results = doctest.testmod(sys.modules[__name__])
-    sys.exit(results[0])

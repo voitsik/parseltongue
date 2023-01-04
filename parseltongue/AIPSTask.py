@@ -14,88 +14,89 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+This module provides the AIPSTask class.  It adapts the Task class from
+the Task module to be able to run classic AIPS tasks:
 
-# This module provides the AIPSTask class.  It adapts the Task class from
-# the Task module to be able to run classic AIPS tasks:
-#
-# >>> imean = AIPSTask('imean')
-#
-# The resulting class instance has all associated adverbs as attributes:
-#
-# >>> print imean.ind
-# 0.0
-# >>> imean.ind = 1
-# >>> print imean.indisk
-# 1.0
+>>> imean = AIPSTask('imean')
+
+The resulting class instance has all associated adverbs as attributes:
+
+>>> print(imean.ind)
+0.0
+>>> imean.ind = 1
+>>> print(imean.indisk)
+1.0
+
 # >>> imean.indi = 2.0
-# >>> print imean.ind
+# >>> print(imean.ind)
 # 2.0
-#
-# It also knows the range for these attributes:
-#
-# >>> imean.ind = -1
-# Traceback (most recent call last):
-#   ...
-# ValueError: value '-1.0' is out of range for attribute 'indisk'
-# >>> imean.ind = 10.0
-# Traceback (most recent call last):
-#   ...
-# ValueError: value '10.0' is out of range for attribute 'indisk'
-#
-# >>> imean.inc = 'UVDATA'
-#
-# >>> print imean.inclass
-# UVDATA
-#
-# >>> imean.blc[1:] = [128, 128]
-# >>> print imean.blc
-# [None, 128.0, 128.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-#
-# >>> imean.blc = AIPSList([256, 256])
-# >>> print imean.blc
-# [None, 256.0, 256.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-#
-# It doesn't hurt to apply AIPSList to a scalar:
-# >>> AIPSList(1)
-# 1
-#
-# And it works on matrices (lists of lists) too:
-# >>> AIPSList([[1,2],[3,4],[5,6]])
-# [None, [None, 1, 2], [None, 3, 4], [None, 5, 6]]
-#
-# It should also work for strings:
-# >>> AIPSList('foobar')
-# 'foobar'
-# >>> AIPSList(['foo', 'bar'])
-# [None, 'foo', 'bar']
-#
-# The AIPSTask class implements the copy method:
-#
-# >>> imean2 = imean.copy()
-# >>> print imean2.inclass
-# UVDATA
-# >>> imean2.inclass = 'SPLIT'
-# >>> print imean.inclass
-# UVDATA
-#
-# It also implements the == operator, which checks whether task name and
-# inputs match:
-#
-# >>> imean2 == imean
-# False
-# >>> imean2.inclass = 'UVDATA'
-# >>> imean2 == imean
-# True
-#
-# Make sure we handle multi-dimensional arrays correctly:
-#
-# >>> sad = AIPSTask('sad')
-# >>> sad.dowidth[1][1:] = [2, 2, 2]
-# >>> sad.dowidth[1]
-# [None, 2.0, 2.0, 2.0]
-# >>> sad.dowidth[2]
-# [None, 1.0, 1.0, 1.0]
 
+It also knows the range for these attributes:
+
+>>> imean.ind = -1
+Traceback (most recent call last):
+  ...
+ValueError: value '-1.0' is out of range for attribute 'indisk'
+>>> imean.ind = 10.0
+Traceback (most recent call last):
+  ...
+ValueError: value '10.0' is out of range for attribute 'indisk'
+
+>>> imean.inc = 'UVDATA'
+
+>>> print(imean.inclass)
+UVDATA
+
+>>> imean.blc[1:] = [128, 128]
+>>> print(imean.blc)
+[None, 128.0, 128.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+>>> imean.blc = AIPSList([256, 256])
+>>> print(imean.blc)
+[None, 256.0, 256.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+It doesn't hurt to apply AIPSList to a scalar:
+>>> AIPSList(1)
+1
+
+And it works on matrices (lists of lists) too:
+>>> AIPSList([[1,2],[3,4],[5,6]])
+[None, [None, 1, 2], [None, 3, 4], [None, 5, 6]]
+
+It should also work for strings:
+>>> AIPSList('foobar')
+'foobar'
+>>> AIPSList(['foo', 'bar'])
+[None, 'foo', 'bar']
+
+The AIPSTask class implements the copy method:
+
+>>> imean2 = imean.copy()
+>>> print(imean2.inclass)
+UVDATA
+>>> imean2.inclass = 'SPLIT'
+>>> print(imean.inclass)
+UVDATA
+
+It also implements the == operator, which checks whether task name and
+inputs match:
+
+>>> imean2 == imean
+False
+>>> imean2.inclass = 'UVDATA'
+>>> imean2 == imean
+True
+
+Make sure we handle multi-dimensional arrays correctly:
+
+>>> sad = AIPSTask('sad')
+>>> sad.dowidth[1][1:] = [2, 2, 2]
+>>> sad.dowidth[1]
+[None, 2.0, 2.0, 2.0]
+>>> sad.dowidth[2]
+[None, 1.0, 1.0, 1.0]
+"""
 
 # Generic Python stuff.
 import copy
@@ -572,11 +573,3 @@ def PythonList(list_):
 
     # Apparently LIST isn't a list; simply return it unchanged.
     return list_
-
-
-# Tests.
-if __name__ == "__main__":
-    import doctest
-
-    results = doctest.testmod(sys.modules[__name__])
-    sys.exit(results[0])

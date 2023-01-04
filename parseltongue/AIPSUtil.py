@@ -15,24 +15,29 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-
 This module provides some utility functions for dealing with AIPS.
-
 """
 
 
-def ehex(n, width=0, padding=None):
+def ehex(num, width=0, padding=None):
     """Convert a number into "extended hex".
 
-    Returns the extended hex presentation for N, optionally padding it
-    up to WIDTH with PADDING.
+    Returns the extended hex presentation for `num`, optionally padding it
+    up to `width` with `padding`.
+
+    Examples
+    --------
+    >>> ehex(100)
+    '2S'
+    >>> ehex(100, 4, padding=0)
+    '002S'
     """
     ehex_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     result = ""
 
-    while n > 0:
-        result = ehex_digits[n % len(ehex_digits)] + result
-        n //= len(ehex_digits)
+    while num > 0:
+        result = ehex_digits[num % len(ehex_digits)] + result
+        num //= len(ehex_digits)
         width -= 1
         continue
 
