@@ -158,16 +158,17 @@ class _AIPSData:
         if userno == -1:
             userno = AIPS.userno
         self._disk = disk
-        disk = AIPS.disks[disk]
+        try:
+            disk = AIPS.disks[disk]
+        except IndexError as exc:
+            raise RuntimeError(f"disk #{disk} does not exist") from exc
         self.desc = _AIPSDataDesc(name, klass, disk.disk, seq, userno)
         self.proxy = disk.proxy()
 
     def _set_name(self, name):
         self.desc.name = name
 
-    name = property(
-        lambda self: self.desc.name, _set_name, doc="Name of this data set."
-    )
+    name = property(lambda self: self.desc.name, _set_name, doc="Name of this data set.")
 
     def _set_klass(self, klass):
         self.desc.klass = klass
