@@ -29,7 +29,6 @@ import struct
 
 # Global AIPS defaults.
 from ..AIPSUtil import ehex
-from .AIPS import AIPS
 
 # The results from parsing POPSDAT.HLP.
 from .Popsdat import Popsdat
@@ -38,7 +37,10 @@ from .Popsdat import Popsdat
 from .Task import Task
 
 # AIPS Lite
-from .. import AIPSLite
+# from .. import AIPSLite
+
+# Default AIPS system format revision.
+AIPS_REVISION = "D"
 
 
 class _AIPSTaskParams:
@@ -155,8 +157,8 @@ class _AIPSTaskParams:
         else:
             self.version = os.environ['AIPS_ROOT'] + '/' + version
 
-        if AIPSLite.initialized:
-            AIPSLite.get_task(name, version=version)
+        # if AIPSLite.initialized:
+        #     AIPSLite.get_task(name, version=version)
 
         self.__parse(name)
 
@@ -277,7 +279,7 @@ class AIPSTask(Task):
                 env['TVLOK'] = 'TVLOK01'
                 env['TVLOK' + ehex(ntvdev, 2, 0)] = tv.replace('DEV', 'LOK')
 
-            td_name = os.environ['DA00'] + '/TD' + AIPS.revision + '000004;'
+            td_name = os.environ['DA00'] + '/TD' + AIPS_REVISION + '000004;'
 
             with open(td_name, mode='r+b') as td_file:
                 td_file.seek(index * 20)
@@ -303,7 +305,7 @@ class AIPSTask(Task):
             # Create the message file if necessary and record the
             # number of messages currently in it.
             user = ehex(userno, 3, 0)
-            ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
+            ms_name = os.environ['DA01'] + '/MS' + AIPS_REVISION \
                 + user + '000.' + user + ';'
             if not os.path.exists(ms_name):
                 with open(ms_name, mode='w') as ms_file:
@@ -370,7 +372,7 @@ class AIPSTask(Task):
         messages = [(1, msg) for msg in messages]
 
         user = ehex(self._userno[tid], 3, 0)
-        ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
+        ms_name = os.environ['DA01'] + '/MS' + AIPS_REVISION \
             + user + '000.' + user + ';'
 
         with open(ms_name, mode='rb') as ms_file:
@@ -444,7 +446,7 @@ class AIPSMessageLog:
 
     def _open(self, userno):
         user = ehex(userno, 3, 0)
-        ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
+        ms_name = os.environ['DA01'] + '/MS' + AIPS_REVISION \
             + user + '000.' + user + ';'
 
         return open(ms_name, mode='r+b')

@@ -17,7 +17,7 @@
 """
 
 This module provides the AIPSDisk class and serves as a container for
-several AIPS-related defaults.  It provides some basic infrastructure
+several AIPS-related defaults. It provides some basic infrastructure
 used by the AIPSTask and AIPSData modules.
 
 """
