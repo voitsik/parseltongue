@@ -37,7 +37,7 @@ class Task:
         """Start the task.
 
         There appears to be two calls, the first in this something undocumented
-        is done to the terminal and the sceond to actually start the function.
+        is done to the terminal and the second to actually start the function.
         """
         (pid, tid) = pty.fork()
         if pid == 0:

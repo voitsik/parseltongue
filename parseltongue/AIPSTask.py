@@ -427,17 +427,18 @@ class AIPSTask(Task):
                         sys.stdout.write(rotator[count % len(rotator)])
                         sys.stdout.flush()
 
-                    events = select.select([sys.stdin.fileno()], [], [], 0)
-                    if sys.stdin.fileno() in events[0]:
-                        flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-                        flags |= os.O_NONBLOCK
-                        fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
-                        message = sys.stdin.read(1024)
-                        flags &= ~os.O_NONBLOCK
-                        fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
-                        if message:
-                            self.feed(proxy, tid, message)
-                        rotator = []
+                    if sys.stdin.isatty():
+                        events = select.select([sys.stdin.fileno()], [], [], 0)
+                        if sys.stdin.fileno() in events[0]:
+                            flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+                            flags |= os.O_NONBLOCK
+                            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
+                            message = sys.stdin.read(1024)
+                            flags &= ~os.O_NONBLOCK
+                            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
+                            if message:
+                                self.feed(proxy, tid, message)
+                            rotator = []
 
                     count += 1
             except KeyboardInterrupt as exception:
