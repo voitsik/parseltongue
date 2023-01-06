@@ -520,6 +520,9 @@ class AIPSCat:
     def __iter__(self):
         return iter(self._cat.keys())
 
+    def __len__(self):
+        return sum(len(self._cat[disk]) for disk in self._cat)
+
     def __str__(self):
         s = ""
         for disk in self._cat:
