@@ -273,8 +273,7 @@ class _AIPSTable:
 
     def __init__(self, data, name, version):
         if not name.startswith("AIPS "):
-            name = "AIPS " + name
-            pass
+            name = f"AIPS {name}"
 
         self._err = OErr.OErr()
 
@@ -285,8 +284,8 @@ class _AIPSTable:
         if not [version, name] in tables:
             msg = name + " table"
             if version:
-                msg += " version %d" % version
-                pass
+                msg += f" version {version}"
+
             msg += " does not exist"
             raise IOError(msg)
 
@@ -298,7 +297,7 @@ class _AIPSTable:
         self._columns = {}
         self._keys = []
         for column in header["FieldName"]:
-            # Convert the AIPS ccolumn names into acceptable Python
+            # Convert the AIPS column names into acceptable Python
             # identifiers.
             key = column.lower()
             key = key.replace(" ", "_")
@@ -306,7 +305,7 @@ class _AIPSTable:
             key = key.replace(".", "_")
             self._columns[key] = column
             self._keys.append(key)
-            continue
+
         self.name = name
         self.version = header["version"]
 
@@ -372,7 +371,6 @@ class _AIPSHistory:
         self._table.Open(3, self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
     def close(self):
         """Close this history table.
@@ -383,7 +381,6 @@ class _AIPSHistory:
         self._table.Close(self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
     # The following functions make an extension table behave as a list
     # of records.
@@ -408,7 +405,6 @@ class _AIPSHistory:
         self._table.WriteRec(0, record, self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
     pass  # class _AIPSHistory
 
@@ -1037,11 +1033,10 @@ class _AIPSData:
         return (name, klass, seq)
 
     def table_highver(self, name):
-        """Return the latest version of the extension table NAME."""
+        """Return the latest version of the extension table `name`."""
 
         if not name.startswith("AIPS "):
-            name = "AIPS " + name
-            pass
+            name = f"AIPS {name}"
 
         return TableList.PGetHigh(self._data.TableList, name)
 
@@ -1058,7 +1053,7 @@ class _AIPSData:
         """Remove an extension table from this UV data set."""
 
         if not name.startswith("AIPS "):
-            name = "AIPS " + name
+            name = f"AIPS {name}"
 
         assert not self._err.isErr
         try:
@@ -1068,15 +1063,20 @@ class _AIPSData:
             print(err)
             msg = "Cannot zap %s table version %d", (name, version)
             raise RuntimeError(msg)
-        return
 
     def zap(self, force=False):
-        """Removes the data object from the AIPS catalogue."""
+        """Removes the data object from the AIPS catalogue.
+
+        Parameters
+        ----------
+        force : bool, optional
+            If True reset file status before removing.
+
+        """
         if force:
             self.clrstat()
-            pass
+
         self._data.Zap(self._err)
-        return
 
     def clrstat(self):
         """Reset file 'busy' status in the AIPS catalogue."""
@@ -1090,7 +1090,6 @@ class _AIPSData:
             self._err.me,
         )
         Obit.AIPSDirStatus(self._data.Disk, self._userno, cno, 4, self._err.me)
-        return
 
     def update(self):
         """Synchronise the data object with the AIPS catalogue entry."""

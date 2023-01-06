@@ -242,8 +242,8 @@ class _AIPSData:
     def copy(self):
         return self.__class__(self.name, self.klass, self.disk, self.seq, self.userno)
 
-    def table(self, type, version):
-        return _AIPSTable(self, type, version)
+    def table(self, name, version):
+        return _AIPSTable(self, name, version)
 
     def _method(self, name):
         return getattr(getattr(self.proxy, self.__class__.__name__), name)
@@ -279,13 +279,13 @@ class _AIPSData:
         lambda self: _AIPSHistory(self), doc="History table for this data set."
     )
 
-    def table_highver(self, type):
+    def table_highver(self, name):
         """Get the highest version of an extension table.
 
-        Returns the highest available version number of the extension
-        table TYPE.
+        Thist method returns the highest available version number of the extension
+        table `name`.
         """
-        return self._method(_whoami())(self.desc, type)
+        return self._method(_whoami())(self.desc, name)
 
     def rename(self, name=None, klass=None, seq=None, **kwds):
         """Rename this image or data set.
@@ -314,7 +314,14 @@ class _AIPSData:
         return result
 
     def zap(self, force=False):
-        """Destroy this image or data set."""
+        """Destroy this image or data file.
+
+        Parameters
+        ----------
+        force : bool, optional
+            If True reset file status before removing.
+
+        """
         return self._method(_whoami())(self.desc, force)
 
     def clrstat(self):
@@ -338,14 +345,21 @@ class _AIPSData:
         """
         return self._method(_whoami())(self.desc, type, version, rowno)
 
-    def zap_table(self, type, version):
+    def zap_table(self, name, version):
         """Destroy an extension table.
 
-        Deletes version VERSION of the extension table TYPE.  If
-        VERSION is 0, delete the highest version of table TYPE.  If
-        VERSION is -1, delete all versions of table TYPE.
+        This method deletes `version` of the extension table `name`.
+
+        Parameters
+        ----------
+        name : str
+            Type of the table ("PL", "CL", "SN", etc).
+        version : int
+            Version of the table. If `version` is 0, delete the highest version of
+            table `name`.  If `version` is -1, delete all versions of table `name`.
+
         """
-        return self._method(_whoami())(self.desc, type, version)
+        return self._method(_whoami())(self.desc, name, version)
 
     def _generate_antennas(self):
         return self._method("antennas")(self.desc)
@@ -478,7 +492,7 @@ class _AIPSHistoryMethod(_AIPSDataMethod):
 
 
 class _AIPSHistory:
-    """This class describes an AIPS hostory table."""
+    """This class describes an AIPS history table."""
 
     def __init__(self, data):
         self._data = data
@@ -547,25 +561,36 @@ class AIPSCat:
 
         return s.strip()
 
-    def zap(self, force=False, **kwds):
-        """Remove a catalogue entry."""
-        name = None
-        if "name" in kwds:
-            name = kwds["name"]
-            del kwds["name"]
-        klass = None
-        if "klass" in kwds:
-            klass = kwds["klass"]
-            del kwds["klass"]
-        seq = None
-        if "seq" in kwds:
-            seq = kwds["seq"]
-            del kwds["seq"]
+    def zap(self, force=False, **kwargs):
+        """Remove AIPS catalogue entries.
+
+        This method removes one or more catalogue entries matching the given `name`,
+        `klass` and `seq` parameters. If parameters are not set, all entries will be
+        deleted.
+
+        Parameters
+        ----------
+        force : bool, optional
+            If True reset i/o status of each entry before removing.
+
+        name : str, optional
+            Name of the entries to remove.
+
+        klass : str
+            Class of the entries to remove.
+
+        seq : int
+            Sequence number of entries to remove.
+
+        """
+        name = kwargs.pop("name", None)
+        klass = kwargs.pop("klass", None)
+        seq = kwargs.pop("seq", None)
 
         # Make sure we don't zap if the user made a typo.
-        if len(kwds) > 0:
-            keys = ["'%s'" % key for key in list(kwds.keys())]
-            msg = "zap() got an unexpected keyword argument %s" % keys[0]
+        if len(kwargs) > 0:
+            keys = ", ".join(f"'{key}'" for key in kwargs)
+            msg = f"zap() got an unexpected keyword argument(s): {keys}"
             raise TypeError(msg)
 
         for disk in self._cat:
@@ -584,6 +609,3 @@ class AIPSCat:
                     AIPSUVData(entry["name"], entry["klass"], disk, entry["seq"]).zap(
                         force
                     )
-
-
-# class AIPSCat
