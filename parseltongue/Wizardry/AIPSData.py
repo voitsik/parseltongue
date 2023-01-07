@@ -17,15 +17,7 @@
 import numpy as np
 
 # Obit stuff.
-from obit import (
-    Obit,
-    OErr,
-    OSystem,
-    History,
-    InfoList,
-    Table,
-    TableList,
-)
+from obit import History, InfoList, Obit, OErr, OSystem, Table, TableList
 
 
 def _array(sequence, shape):
@@ -37,22 +29,24 @@ def _array(sequence, shape):
 def _scalarize(value):
     """Scalarize a value.
 
-    If VALUE is a list that consists of a single element, return that
-    element.  Otherwise return VALUE.
+    If `value` is a list that consists of a single element, return that
+    element.  Otherwise return `value`.
     """
     if isinstance(value, list) and len(value) == 1:
         return value[0]
+
     return value
 
 
 def _vectorize(value):
     """Vectorize a value.
 
-    If VALUE is a scalar, return a list consisting of that scalar.
-    Otherwise return VALUE.
+    If `value` is a scalar, return a list consisting of that scalar.
+    Otherwise return `value`.
     """
     if not isinstance(value, list):
         return [value]
+
     return value
 
 
@@ -60,6 +54,7 @@ def _rstrip(value):
     """Strip trailing whitespace."""
     if isinstance(value, list):
         return [str.rstrip() for str in value]
+
     return value.rstrip()
 
 
@@ -95,7 +90,7 @@ class _AIPSTableRow:
         """Return the field name corresponding to attribute NAME."""
         if name in self._fields:
             return self._fields[name]
-        msg = "%s instance has no attribute '%s'" % (self.__class__.__name__, name)
+        msg = f"{self.__class__.__name__} instance has no attribute '{name}'"
         raise AttributeError(msg)
 
     def __getattr__(self, name):
@@ -123,7 +118,8 @@ class _AIPSTableRow:
         if self._err.isErr:
             raise RuntimeError
 
-    pass  # class _AIPSTableRow
+
+# class _AIPSTableRow
 
 
 class AIPSTableRow(_AIPSTableRow):
@@ -135,32 +131,32 @@ class AIPSTableRow(_AIPSTableRow):
         self._row = {}
         self._row["Table name"] = header["Table name"]
         self._row["NumFields"] = len(header["FieldName"])
-        desc = list(zip(header["FieldName"], header["type"], header["repeat"]))
-        for field, type, repeat in desc:
-            if type == 2 or type == 3 or type == 15:
+        desc = zip(header["FieldName"], header["type"], header["repeat"])
+
+        for field, type_, repeat in desc:
+            if type_ in (1, 2, 3, 4):
                 # Integer.
                 self._row[field] = repeat * [0]
-            elif type == 9 or type == 10:
+            elif type_ in (10, 11):
                 # Floating-point number.
                 self._row[field] = repeat * [0.0]
-            elif type == 13:
+            elif type_ == 14:
                 # String.
                 self._row[field] = ""
-            elif type == 14:
+            elif type_ == 15:
                 # Boolean.
                 self._row[field] = repeat * [False]
             else:
-                msg = "Unimplemented type %d for field %s" % (type, field)
-                raise AssertionError(msg)
-            continue
-        return
+                msg = f"Unimplemented type {type_} for field {field}"
+                raise NotImplementedError(msg)
 
     def update(self):
         # A row instantiated by the AIPSTableRow class cannot be updated.
         msg = "%s instance has no attribute 'update'" % self.__class__.__name__
         raise AttributeError(msg)
 
-    pass  # AIPSTableRow
+
+# AIPSTableRow
 
 
 class _AIPSTableIter(_AIPSTableRow):
@@ -178,16 +174,17 @@ class _AIPSTableIter(_AIPSTableRow):
             self._err.Clear()
             raise StopIteration
         assert not self._err.isErr
+
         return self
 
-    pass  # class _AIPSTableIter
+
+# class _AIPSTableIter
 
 
 class _AIPSTableKeywords:
     def __init__(self, table, err):
         self._err = err
         self._table = table
-        return
 
     def __getitem__(self, key):
         key = key.upper().ljust(8)
@@ -196,16 +193,16 @@ class _AIPSTableKeywords:
 
     def __setitem__(self, key, value):
         key = key.upper().ljust(8)
+
         try:
             _type = InfoList.PGet(self._table.IODesc.List, key)[2]
-        except BaseException:
+        except KeyError as exc:
             # New keys are either strings or floats.
             if isinstance(value, str):
-                _type = 13
+                _type = 14  # OBIT_string == 14
             else:
-                _type = 9
-                pass
-            pass
+                _type = 10  # OBIT_float == 10
+
         if _type in (2, 3, 4):
             value = int(value)
             InfoList.PAlwaysPutInt(
@@ -214,23 +211,23 @@ class _AIPSTableKeywords:
             InfoList.PAlwaysPutInt(
                 self._table.IODesc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 9:
-            value = float(value)
-            InfoList.PAlwaysPutFloat(
-                self._table.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
-            )
-            InfoList.PAlwaysPutFloat(
-                self._table.IODesc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
-            )
         elif _type == 10:
             value = float(value)
+            InfoList.PAlwaysPutFloat(
+                self._table.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
+            )
+            InfoList.PAlwaysPutFloat(
+                self._table.IODesc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
+            )
+        elif _type == 11:
+            value = float(value)
             InfoList.PAlwaysPutDouble(
                 self._table.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
             InfoList.PAlwaysPutDouble(
                 self._table.IODesc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 13:
+        elif _type == 14:
             value = str(value).ljust(8)
             InfoList.PAlwaysPutString(
                 self._table.Desc.List, key, [8, 1, 1, 1, 1], _vectorize(value)
@@ -238,7 +235,7 @@ class _AIPSTableKeywords:
             InfoList.PAlwaysPutString(
                 self._table.IODesc.List, key, [8, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 14:
+        elif _type == 15:
             value = bool(value)
             InfoList.PAlwaysPutBoolean(
                 self._table.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
@@ -247,25 +244,24 @@ class _AIPSTableKeywords:
                 self._table.IODesc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
         else:
-            raise AssertionError("not implemented")
+            raise NotImplementedError("not implemented")
         Table.PDirty(self._table)
-        return
 
     def _generate_dict(self):
-        dict = {}
+        dict_ = {}
         for key in self._table.IODesc.List.Dict:
-            if self._table.IODesc.List.Dict[key][0] == 13:
-                dict[key] = self._table.IODesc.List.Dict[key][2][0]
+            if self._table.IODesc.List.Dict[key][0] == 14:
+                dict_[key] = self._table.IODesc.List.Dict[key][2][0]
             else:
-                dict[key] = _scalarize(self._table.IODesc.List.Dict[key][2])
-                pass
-            continue
-        return dict
+                dict_[key] = _scalarize(self._table.IODesc.List.Dict[key][2])
+
+        return dict_
 
     def __str__(self):
         return str(self._generate_dict())
 
-    pass  # class _AIPSTableKeywords
+
+# class _AIPSTableKeywords
 
 
 class _AIPSTable:
@@ -287,12 +283,14 @@ class _AIPSTable:
                 msg += f" version {version}"
 
             msg += " does not exist"
-            raise IOError(msg)
+            raise OSError(msg)
 
         self._table = data.NewTable(3, name, version, self._err)
         self._table.Open(3, self._err)
+
         if self._err.isErr:
             raise RuntimeError
+
         header = self._table.Desc.Dict
         self._columns = {}
         self._keys = []
@@ -344,7 +342,6 @@ class _AIPSTable:
         self._table.WriteRow(key + 1, row._row, self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
     def append(self, row):
         """Append a row to this extension table."""
@@ -352,14 +349,16 @@ class _AIPSTable:
         self._table.WriteRow(len(self) + 1, row._row, self._err)
         if self._err.isErr:
             raise RuntimeError
-        return
 
-    def _keywords(self):
+    @property
+    def keywords(self):
+        """Keywords for this table."""
         return _AIPSTableKeywords(self._table, self._err)
 
-    keywords = property(_keywords)
+    # keywords = property(_keywords, doc="Keywords for this table.")
 
-    pass  # class _AIPSTable
+
+# class _AIPSTable
 
 
 class _AIPSHistory:
@@ -409,7 +408,7 @@ class _AIPSHistory:
     pass  # class _AIPSHistory
 
 
-class _AIPSVisibility(object):
+class _AIPSVisibility:
     """This class is used as an iterator over visibilities."""
 
     def __init__(self, data, err, index):
@@ -472,11 +471,9 @@ class _AIPSVisibility(object):
         count = InfoList.PGet(self._data.List, "nVisPIO")[4][0]
         self._buffer.shape = (count, -1)
         self._index = 0
-        return
 
     def update(self):
         self._flush = True
-        return
 
     def _get_uvw(self):
         u = self._buffer[self._index][self._desc["ilocu"]]
@@ -640,10 +637,11 @@ class _AIPSVisibilityIter(_AIPSVisibility):
             self._fill()
         return self
 
-    pass  # class _AIPSVisibilityIter
+
+# class _AIPSVisibilityIter
 
 
-class _AIPSVisibilitySel(object):
+class _AIPSVisibilitySel:
     def __init__(self, data, source):
         self._data = data
 
@@ -652,22 +650,16 @@ class _AIPSVisibilitySel(object):
             if source == row.source.strip():
                 source_id = row.id__no
                 break
-            pass
+
         for row in data.table("NX", 0):
             if source_id == row.source_id:
                 self._ranges.append((row.start_vis - 1, row.end_vis - 1))
-                pass
-            pass
-
-        return
 
     def __iter__(self):
         return _AIPSVisibilityIter(self._data._data, self._data._err, self._ranges)
 
-    pass
 
-
-class _AIPSVisibilitySlice(object):
+class _AIPSVisibilitySlice:
     def __init__(self, data, slice):
         self._data = data
 
@@ -678,25 +670,20 @@ class _AIPSVisibilitySlice(object):
                 start = len(data) + slice.start
             else:
                 start = slice.start
-                pass
-            pass
+
         if slice.stop:
             if slice.stop < 0:
                 stop = len(data) + slice.stop
             else:
                 stop = slice.stop
-                pass
-            pass
+
         if slice.step and not slice.step == 1:
             msg = "Stride %d is not supported" % slice.step
             raise NotImplementedError(msg)
         self._ranges = [(start, stop)]
-        return
 
     def __iter__(self):
         return _AIPSVisibilityIter(self._data._data, self._data._err, self._ranges)
-
-    pass
 
 
 class _AIPSDataKeywords:
@@ -704,7 +691,6 @@ class _AIPSDataKeywords:
         self._err = err
         self._data = data
         self._obit = obit
-        return
 
     def __getitem__(self, key):
         key = key.upper().ljust(8)
@@ -715,66 +701,63 @@ class _AIPSDataKeywords:
         key = key.upper().ljust(8)
         try:
             _type = InfoList.PGet(self._data.Desc.List, key)[2]
-        except BaseException:
+        except KeyError:
             # New keys are either strings or floats.
             if isinstance(value, str):
-                _type = 13
+                _type = 14  # OBIT_string == 14
             else:
-                _type = 9
-                pass
-            pass
+                _type = 10  # OBIT_float == 10
+
         if _type in (2, 3, 4):
             value = int(value)
             InfoList.PAlwaysPutInt(
                 self._data.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 9:
+        elif _type == 10:
             value = float(value)
             InfoList.PAlwaysPutFloat(
                 self._data.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 10:
+        elif _type == 11:
             value = float(value)
             InfoList.PAlwaysPutDouble(
                 self._data.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 13:
+        elif _type == 14:
             value = str(value).ljust(8)
             InfoList.PAlwaysPutString(
                 self._data.Desc.List, key, [8, 1, 1, 1, 1], _vectorize(value)
             )
-        elif _type == 14:
+        elif _type == 15:
             value = bool(value)
             InfoList.PAlwaysPutBoolean(
                 self._data.Desc.List, key, [1, 1, 1, 1, 1], _vectorize(value)
             )
         else:
-            raise AssertionError("not implemented")
+            raise NotImplementedError("not implemented")
         self._obit.PDirty(self._data)
-        return
 
     def _generate_dict(self):
-        dict = {}
+        dict_ = {}
         for key in self._data.Desc.List.Dict:
-            if self._data.Desc.List.Dict[key][0] == 13:
-                dict[key] = self._data.Desc.List.Dict[key][2][0]
+            if self._data.Desc.List.Dict[key][0] == 14:
+                dict_[key] = self._data.Desc.List.Dict[key][2][0]
             else:
-                dict[key] = _scalarize(self._data.Desc.List.Dict[key][2])
-                pass
-            continue
-        return dict
+                dict_[key] = _scalarize(self._data.Desc.List.Dict[key][2])
+
+        return dict_
 
     def __str__(self):
         return str(self._generate_dict())
 
     def update(self):
         self._obit.PUpdateDesc(self._data, self._err)
-        pass
-
-    pass  # class _AIPSDataKeywords
 
 
-class _AIPSDataHeader(object):
+# class _AIPSDataKeywords
+
+
+class _AIPSDataHeader:
     def __init__(self, data, obit, err):
         self._err = err
         self._data = data
@@ -784,9 +767,6 @@ class _AIPSDataHeader(object):
             if self._keys[key] in self._dict:
                 value = _rstrip(self._dict[self._keys[key]])
                 self._dict[self._keys[key]] = value
-                pass
-            continue
-        return
 
     _keys = {
         "object": "object",
@@ -849,7 +829,7 @@ class _AIPSDataHeader(object):
         try:
             value = self.__getitem__(name)
         except KeyError:
-            msg = "%s instance has no attribute '%s'" % (self.__class__.__name__, name)
+            msg = f"{self.__class__.__name__} instance has no attribute '{name}'"
             raise AttributeError(msg)
         return value
 
@@ -860,7 +840,7 @@ class _AIPSDataHeader(object):
         try:
             self.__setitem__(name, value)
         except KeyError:
-            msg = "%s instance has no attribute '%s'" % (self.__class__.__name__, name)
+            msg = f"{self.__class__.__name__} instance has no attribute '{name}'"
             raise AttributeError(msg)
         return
 
@@ -869,8 +849,7 @@ class _AIPSDataHeader(object):
         for key in self._keys:
             if self._keys[key] in self._dict:
                 dict[key] = self._dict[self._keys[key]]
-                pass
-            continue
+
         return dict
 
     def __str__(self):
@@ -879,9 +858,9 @@ class _AIPSDataHeader(object):
     def update(self):
         self._data.Desc.Dict = self._dict
         self._obit.PUpdateDesc(self._data, self._err)
-        pass
 
-    pass  # class _AIPSDataHeader
+
+# class _AIPSDataHeader
 
 
 class _AIPSData:
@@ -906,17 +885,15 @@ class _AIPSData:
             userno = -1
             if len(args) == 5:
                 userno = args[4]
-                pass
+
             self._init(args[0], args[1], args[2], args[3], userno)
-            pass
-        return
 
     _header = None
 
     def _generate_header(self):
         if not self._header:
             self._header = _AIPSDataHeader(self._data, self._obit, self._err)
-            pass
+
         return self._header
 
     header = property(_generate_header, doc="Header for this data set.")
@@ -926,7 +903,7 @@ class _AIPSData:
     def _generate_keywords(self):
         if not self._keywords:
             self._keywords = _AIPSDataKeywords(self._data, self._obit, self._err)
-            pass
+
         return self._keywords
 
     keywords = property(_generate_keywords, doc="Keywords for this data set.")
@@ -963,7 +940,7 @@ class _AIPSData:
         for i in range(header["inaxes"][jlocs]):
             stokes.append(stokes_dict[int(cval)])
             cval += header["cdelt"][jlocs]
-            continue
+
         return stokes
 
     stokes = property(_generate_stokes, doc="Stokes parameters for this data set.")
@@ -1034,7 +1011,6 @@ class _AIPSData:
 
     def table_highver(self, name):
         """Return the latest version of the extension table `name`."""
-
         if not name.startswith("AIPS "):
             name = f"AIPS {name}"
 
@@ -1043,10 +1019,18 @@ class _AIPSData:
     def table(self, name, version):
         """Access an extension table attached to this UV data set.
 
-        Returns version VERSION of the extension table NAME.  If
-        VERSION is 0, this returns the highest available version of
-        the requested extension table."""
+        Parameters
+        ----------
+        name : str
+            Name of the extension table ("CL", "SN", "PL", etc).
+        version : int
+            Version of the extension table. If `version` is 0, return the highest
+            available version of the requested extension table.
 
+        Returns
+        -------
+            AIPSTable object.
+        """
         return _AIPSTable(self._data, name, version)
 
     def zap_table(self, name, version):
@@ -1096,7 +1080,8 @@ class _AIPSData:
         self._obit.PUpdateDesc(self._data, self._err)
         return
 
-    pass  # class _AIPSData
+
+# class _AIPSData
 
 
 class AIPSImage(_AIPSData):
@@ -1104,6 +1089,7 @@ class AIPSImage(_AIPSData):
 
     def _init(self, name, klass, disk, seq, userno):
         from obit import Image
+
         from .. import AIPS
 
         self._obit = Image
@@ -1118,7 +1104,6 @@ class AIPSImage(_AIPSData):
         self._data = Image.newPAImage(name, name, klass, disk, seq, True, self._err)
         if self._err.isErr:
             raise RuntimeError
-
 
     def _pixels(self):
         Obit.ImageRead(self._data.me, self._err.me)
@@ -1140,7 +1125,6 @@ class AIPSImage(_AIPSData):
         """Remove degenerate dimensions from image."""
 
         self._squeezed = True
-        return
 
     def attach_table(self, name, version, **kwds):
         """Attach an extension table to this image.
@@ -1194,6 +1178,7 @@ class AIPSUVData(_AIPSData):
 
     def _init(self, name, klass, disk, seq, userno):
         from obit import UV
+
         from .. import AIPS
 
         self._obit = UV
@@ -1210,7 +1195,6 @@ class AIPSUVData(_AIPSData):
         self._polarizations = []
         self._sources = []
         self._open = False
-        return
 
     def __len__(self):
         return self._data.Desc.Dict["nvis"]
@@ -1230,7 +1214,7 @@ class AIPSUVData(_AIPSData):
         if not self._open:
             self._data.Open(3, self._err)
             self._open = True
-            pass
+
         return _AIPSVisibilityIter(self._data, self._err)
 
     def _generate_antennas(self):
@@ -1240,8 +1224,7 @@ class AIPSUVData(_AIPSData):
             antable = self.table("AN", 0)
             for antenna in antable:
                 self._antennas.append(antenna.anname.rstrip())
-                continue
-            pass
+
         return self._antennas
 
     antennas = property(_generate_antennas, doc="Antennas in this data set.")
@@ -1324,9 +1307,13 @@ class AIPSUVData(_AIPSData):
             raise RuntimeError
         return _AIPSTable(self._data, name, version)
 
-    history = property(lambda self: _AIPSHistory(self._data))
+    # history = property(lambda self: _AIPSHistory(self._data))
+    @property
+    def history(self):
+        return _AIPSHistory(self._data)
 
-    pass  # class AIPSUVData
+
+# class AIPSUVData
 
 
 err = OErr.OErr()
