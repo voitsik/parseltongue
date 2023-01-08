@@ -72,7 +72,7 @@ class _AIPSTableRow:
             if not self._row:
                 raise IndexError("list index out of range")
             if self._err.isErr:
-                raise RuntimeError
+                raise OErr.ObitError("Reading row")
 
     def __str__(self):
         return str(self._generate_dict())
@@ -116,7 +116,7 @@ class _AIPSTableRow:
         assert not self._err.isErr
         self._table.WriteRow(self._rownum + 1, self._row, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Updating row")
 
 
 # class _AIPSTableRow
@@ -277,19 +277,19 @@ class _AIPSTable:
             version = TableList.PGetHigh(data.TableList, name)
 
         tables = TableList.PGetList(data.TableList, self._err)
-        if not [version, name] in tables:
+        if [version, name] not in tables:
             msg = name + " table"
             if version:
                 msg += f" version {version}"
 
             msg += " does not exist"
-            raise OSError(msg)
+            raise FileNotFoundError(msg)
 
         self._table = data.NewTable(3, name, version, self._err)
         self._table.Open(3, self._err)
 
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Opening table")
 
         header = self._table.Desc.Dict
         self._columns = {}
@@ -319,7 +319,7 @@ class _AIPSTable:
         self._table.Open(3, self._err)
         self._table.Close(self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Closing table")
 
     # The following functions make an extension table behave as a list
     # of rows.
@@ -341,22 +341,19 @@ class _AIPSTable:
         assert not self._err.isErr
         self._table.WriteRow(key + 1, row._row, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Writing row")
 
     def append(self, row):
         """Append a row to this extension table."""
         assert not self._err.isErr
         self._table.WriteRow(len(self) + 1, row._row, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Appending table row")
 
     @property
     def keywords(self):
         """Keywords for this table."""
         return _AIPSTableKeywords(self._table, self._err)
-
-    # keywords = property(_keywords, doc="Keywords for this table.")
-
 
 # class _AIPSTable
 
@@ -369,7 +366,7 @@ class _AIPSHistory:
         self._table = History.History("AIPS HI", data.List, self._err)
         self._table.Open(3, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Opening history")
 
     def close(self):
         """Close this history table.
@@ -379,7 +376,7 @@ class _AIPSHistory:
         set."""
         self._table.Close(self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Closing history")
 
     # The following functions make an extension table behave as a list
     # of records.
@@ -390,7 +387,7 @@ class _AIPSHistory:
         if not record:
             raise IndexError("list index out of range")
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Reading history")
         return record
 
     def __setitem__(self, key, record):
@@ -403,9 +400,9 @@ class _AIPSHistory:
         assert not self._err.isErr
         self._table.WriteRec(0, record, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Appending history")
 
-    pass  # class _AIPSHistory
+# class _AIPSHistory
 
 
 class _AIPSVisibility:
@@ -452,7 +449,7 @@ class _AIPSVisibility:
             assert self._first == self._data.Desc.Dict["firstVis"] - 1
             Obit.UVRewrite(self._data.me, self._err.me)
             if self._err.isErr:
-                raise RuntimeError
+                raise OErr.ObitError("Obit.UVRewrite")
             self._flush = False
 
         if index:
@@ -463,7 +460,7 @@ class _AIPSVisibility:
 
         Obit.UVRead(self._data.me, self._err.me)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Reading UV")
         shape = len(self._data.VisBuf) // 4
         self._buffer = _array(self._data.VisBuf, shape)
         self._first = self._data.Desc.Dict["firstVis"] - 1
@@ -630,7 +627,7 @@ class _AIPSVisibilityIter(_AIPSVisibility):
             if self._flush:
                 Obit.UVWrite(self._data.me, self._err.me)
                 if self._err.isErr:
-                    raise RuntimeError
+                    raise OErr.ObitError("Writing UV data")
                 self._flush = False
             raise StopIteration
         if self._index >= self._count:
@@ -842,15 +839,14 @@ class _AIPSDataHeader:
         except KeyError:
             msg = f"{self.__class__.__name__} instance has no attribute '{name}'"
             raise AttributeError(msg)
-        return
 
     def _generate_dict(self):
-        dict = {}
+        dict_ = {}
         for key in self._keys:
             if self._keys[key] in self._dict:
-                dict[key] = self._dict[self._keys[key]]
+                dict_[key] = self._dict[self._keys[key]]
 
-        return dict
+        return dict_
 
     def __str__(self):
         return str(self._generate_dict())
@@ -1004,8 +1000,6 @@ class _AIPSData:
             entry = AIPSDir.PInfo(self.disk, self.userno, cno, self._err)
             if name == entry[0:12].strip() and klass == entry[13:19].strip():
                 seq = int(entry[20:25])
-                pass
-            pass
 
         return (name, klass, seq)
 
@@ -1042,10 +1036,12 @@ class _AIPSData:
         assert not self._err.isErr
         try:
             self._data.ZapTable(name, version, self._err)
-            self._data.UpdateTables(self._err)
-        except OErr.OErr as err:
-            print(err)
-            msg = "Cannot zap %s table version %d", (name, version)
+
+            # OData.ZapTable calls OData.UpdateTables
+            # self._data.UpdateTables(self._err)
+        except OErr.ObitError as err:
+            # print(err)
+            msg = f"Cannot zap {name} table version {version}: {err}"
             raise RuntimeError(msg)
 
     def zap(self, force=False):
@@ -1078,8 +1074,6 @@ class _AIPSData:
     def update(self):
         """Synchronise the data object with the AIPS catalogue entry."""
         self._obit.PUpdateDesc(self._data, self._err)
-        return
-
 
 # class _AIPSData
 
@@ -1103,12 +1097,12 @@ class AIPSImage(_AIPSData):
         OSystem.PSetAIPSuser(userno)
         self._data = Image.newPAImage(name, name, klass, disk, seq, True, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Opening Image data")
 
     def _pixels(self):
         Obit.ImageRead(self._data.me, self._err.me)
         if self._err.isErr:
-            raise RuntimeError("Reading image pixels")
+            raise OErr.ObitError("Reading image pixels")
         shape = []
         for len in self.header["naxis"]:
             if self._squeezed and len == 1:
@@ -1155,10 +1149,12 @@ class AIPSImage(_AIPSData):
                 data, [version], 3, name, kwds["no_pol"], kwds["no_if"], self._err.me
             )
         else:
-            msg = "Attaching %s tables is not implemented yet" % name
+            msg = f"Attaching {name} tables is not implemented yet"
             raise NotImplementedError(msg)
+
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError(f"Attaching table {name}")
+
         return _AIPSTable(self._data, name, version)
 
     history = property(lambda self: _AIPSHistory(self._data))
@@ -1166,11 +1162,11 @@ class AIPSImage(_AIPSData):
     def update(self):
         Obit.ImageWrite(self._data.me, self._err.me)
         if self._err.isErr:
-            raise RuntimeError("Writing image pixels")
-        pass
+            raise OErr.ObitError("Writing image pixels")
+
         _AIPSData.update(self)
 
-    pass  # class AIPSImage
+# class AIPSImage
 
 
 class AIPSUVData(_AIPSData):
@@ -1190,7 +1186,7 @@ class AIPSUVData(_AIPSData):
         OSystem.PSetAIPSuser(userno)
         self._data = UV.newPAUV(name, name, klass, disk, seq, True, self._err)
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError("Opening UV data")
         self._antennas = []
         self._polarizations = []
         self._sources = []
@@ -1303,8 +1299,10 @@ class AIPSUVData(_AIPSData):
         else:
             msg = "Attaching %s tables is not implemented yet" % name
             raise NotImplementedError(msg)
+
         if self._err.isErr:
-            raise RuntimeError
+            raise OErr.ObitError(f"Opening table {name}")
+
         return _AIPSTable(self._data, name, version)
 
     # history = property(lambda self: _AIPSHistory(self._data))

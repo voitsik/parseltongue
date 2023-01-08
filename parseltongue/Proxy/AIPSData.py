@@ -114,7 +114,7 @@ class AIPSData:
             result = table.keywords._generate_dict()
         finally:
             table.close()
-            pass
+
         return result
 
     def version_table(self, desc, type, version):
@@ -124,7 +124,7 @@ class AIPSData:
             result = table.version
         finally:
             table.close()
-            pass
+
         return result
 
     def _getitem_table(self, desc, type, version, key):
@@ -134,7 +134,7 @@ class AIPSData:
             result = table[key]._generate_dict()
         finally:
             table.close()
-            pass
+
         return result
 
     def _len_table(self, desc, type, version):
@@ -144,7 +144,7 @@ class AIPSData:
             result = len(table)
         finally:
             table.close()
-            pass
+
         return result
 
     def zap_table(self, desc, type, version):
@@ -160,7 +160,7 @@ class AIPSData:
             result = history[key]
         finally:
             history.close()
-            pass
+
         return result
 
 # class AIPSData
