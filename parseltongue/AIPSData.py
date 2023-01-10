@@ -58,7 +58,7 @@ True
 """
 
 # Generic Python stuff.
-import sys
+import inspect
 
 # Global AIPS defaults.
 from . import AIPS
@@ -76,7 +76,15 @@ from . import AIPS
 
 def _whoami():
     """Return the name of the function that called us."""
-    return sys._getframe(1).f_code.co_name
+    # sys._getframe also works instead of inspect.currentframe although the latter
+    # avoids accessing a private function.
+    # return sys._getframe(1).f_code.co_name
+    frame = inspect.currentframe()
+
+    if frame is None:
+        raise RuntimeError("error getting current frame")
+
+    return frame.f_back.f_code.co_name
 
 
 class _AIPSDataMethod:
